@@ -42,6 +42,10 @@ const NOT_SUBSCRIPTION_MCC = new Set([
   5541, 5542, 5812, 5813, 5814, 5912, 5921, 5993, 6010, 6011, 6012, 6050, 6051, 6538, 6540, 7523,
 ]);
 
+/** Transfers, cash and bank fees repeat too, but they are not subscriptions. */
+const NOT_SUBSCRIPTION_TEXT =
+  /переказ|перевод|поповнення|пополнение|зняття|снятие|банкомат|\batm\b|p2p|на картку|на карту|з картки|с карты|комісі|комисси|відсотк|процент|кешбек|cashback|депозит|кредит|погашення|погашение/i;
+
 function normalize(description: string): string {
   return description
     .toLowerCase()
@@ -105,7 +109,7 @@ export function detectSubscriptions(items: StatementItem[], today: ISODate): Can
         : `svc:${service.id}`;
       label = service.name;
     } else {
-      if (NOT_SUBSCRIPTION_MCC.has(it.mcc)) continue;
+      if (NOT_SUBSCRIPTION_MCC.has(it.mcc) || NOT_SUBSCRIPTION_TEXT.test(it.description)) continue;
       key = `raw:${normalize(it.description)}`;
       if (key === 'raw:') continue;
       label = titleCase(it.description);

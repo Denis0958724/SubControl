@@ -12,7 +12,7 @@ import { FREE_LIMIT, useStore } from '../store';
 import { space, usePalette } from '../theme';
 
 const FEATURES: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'bolt', title: 'Автопошук у monobank', text: 'Знайде підписки у виписці за 3 місяці' },
+  { icon: 'bolt', title: 'Автопошук підписок', text: 'У виписці monobank, ПриватБанку та інших банків' },
   { icon: 'users', title: 'Платимо разом', text: 'Скільки з кожного, якщо ділите підписку з родиною' },
   { icon: 'bell', title: 'Нагадування за 3 дні або тиждень', text: 'Більше часу, щоб передумати' },
   { icon: 'card', title: 'Скільки завгодно підписок', text: `Безкоштовно можна вести до ${FREE_LIMIT}` },

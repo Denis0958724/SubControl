@@ -24,8 +24,11 @@ export function tap() {
 
 export function Button({ title, onPress, kind = 'primary', icon, disabled, loading, style, compact }: Props) {
   const p = usePalette();
-  const bg = { primary: p.cobalt, secondary: p.cobaltSoft, ghost: 'transparent', danger: p.redSoft }[kind];
-  const fg = { primary: p.onCobalt, secondary: p.cobalt, ghost: p.cobalt, danger: p.red }[kind];
+  // disabled buttons stay solid: a see-through button over a list looks broken
+  const bg = disabled && kind !== 'ghost'
+    ? p.track
+    : { primary: p.cobalt, secondary: p.cobaltSoft, ghost: 'transparent', danger: p.redSoft }[kind];
+  const fg = disabled ? p.muted : { primary: p.onCobalt, secondary: p.cobalt, ghost: p.cobalt, danger: p.red }[kind];
   return (
     <Pressable
       accessibilityRole="button"
@@ -38,7 +41,7 @@ export function Button({ title, onPress, kind = 'primary', icon, disabled, loadi
       style={({ pressed }) => [
         styles.base,
         compact && styles.compact,
-        { backgroundColor: bg, opacity: disabled ? 0.4 : pressed ? 0.75 : 1 },
+        { backgroundColor: bg, opacity: pressed ? 0.75 : 1 },
         style,
       ]}
     >

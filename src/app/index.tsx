@@ -48,6 +48,7 @@ export default function Home() {
   return (
     <Screen
       header={header}
+      floating
       footer={
         empty ? undefined : (
           <Button title="Додати підписку" icon="plus" onPress={add} style={[styles.fab, { shadowColor: p.shadow }]} />
@@ -75,7 +76,7 @@ export default function Home() {
           <View style={styles.emptyActions}>
             <Button title="Додати підписку" icon="plus" onPress={add} />
             <Button
-              title="Знайти в monobank"
+              title="Знайти у виписці банку"
               icon="bolt"
               kind="secondary"
               onPress={() => router.push('/import')}

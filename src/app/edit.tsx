@@ -251,6 +251,7 @@ const styles = StyleSheet.create({
   identity: { flexDirection: 'row', alignItems: 'center', gap: space(4), paddingVertical: space(2) },
   nameInput: {
     flex: 1,
+    minWidth: 0,
     fontFamily: fonts.display,
     fontSize: 22,
     paddingVertical: space(2),
@@ -260,6 +261,7 @@ const styles = StyleSheet.create({
   amountRow: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   amountInput: {
     flex: 1,
+    minWidth: 0,
     fontFamily: fonts.display,
     fontSize: 36,
     paddingVertical: 0,

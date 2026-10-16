@@ -21,16 +21,15 @@ interface ScreenProps {
   footer?: ReactNode;
   header?: ReactNode;
   scroll?: boolean;
+  /** footer floats over the content (home screen); otherwise it sits in its own bar below it */
+  floating?: boolean;
 }
 
-export function Screen({ children, footer, header, scroll = true }: ScreenProps) {
+export function Screen({ children, footer, header, scroll = true, floating = false }: ScreenProps) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
-  const body = (
-    <View style={[styles.content, { paddingBottom: footer ? space(44) + insets.bottom : space(10) + insets.bottom }]}>
-      {children}
-    </View>
-  );
+  const bottomGap = footer ? (floating ? space(32) : space(6)) : space(10) + insets.bottom;
+  const body = <View style={[styles.content, { paddingBottom: bottomGap }]}>{children}</View>;
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -47,7 +46,10 @@ export function Screen({ children, footer, header, scroll = true }: ScreenProps)
       {footer && (
         <View
           pointerEvents="box-none"
-          style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space(4)) + space(2) }]}
+          style={[
+            floating ? styles.floating : [styles.bar, { backgroundColor: p.paper, borderTopColor: p.line }],
+            { paddingBottom: Math.max(insets.bottom, space(4)) + space(2) },
+          ]}
         >
           {footer}
         </View>
@@ -164,7 +166,8 @@ export function ProBadge() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { paddingHorizontal: space(5), paddingTop: space(2), gap: space(3) },
-  footer: { position: 'absolute', left: space(5), right: space(5), bottom: 0 },
+  floating: { position: 'absolute', left: space(5), right: space(5), bottom: 0 },
+  bar: { paddingHorizontal: space(5), paddingTop: space(3), borderTopWidth: StyleSheet.hairlineWidth },
   header: {
     height: 56,
     flexDirection: 'row',

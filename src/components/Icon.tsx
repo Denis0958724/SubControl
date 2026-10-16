@@ -3,7 +3,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 export type IconName =
   | 'plus' | 'close' | 'chevronRight' | 'chevronLeft' | 'arrowLeft' | 'sliders' | 'bell'
   | 'check' | 'external' | 'search' | 'bolt' | 'users' | 'trash' | 'lock' | 'calendar'
-  | 'card' | 'star' | 'refresh' | 'shield' | 'edit' | 'download';
+  | 'card' | 'star' | 'refresh' | 'shield' | 'edit' | 'download' | 'file';
 
 interface Props {
   name: IconName;
@@ -103,5 +103,7 @@ function render(name: IconName, c: Record<string, unknown>) {
       return <Path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" {...c} />;
     case 'download':
       return <Path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" {...c} />;
+    case 'file':
+      return <Path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v5h5M9.5 13h5M9.5 17h5" {...c} />;
   }
 }

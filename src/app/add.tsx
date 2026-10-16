@@ -52,7 +52,7 @@ export default function Add() {
             icon="bolt"
             tone="accent"
             title="Знайти автоматично"
-            hint="Перегляну виписку monobank і покажу регулярні списання"
+            hint="monobank, ПриватБанк та інші банки"
             right={isPro ? <Icon name="chevronRight" size={18} color={p.muted} /> : <ProBadge />}
             onPress={() => router.push('/import')}
           />
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space(4),
     height: 50,
   },
-  searchInput: { flex: 1, fontFamily: fonts.regular, fontSize: 16, height: '100%' },
+  searchInput: { flex: 1, minWidth: 0, fontFamily: fonts.regular, fontSize: 16, height: '100%' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space(1) },
   tile: { width: '25%', alignItems: 'center', paddingVertical: space(2), paddingHorizontal: space(1), gap: space(2) },
   tileLabel: { minHeight: 36 },

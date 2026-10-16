@@ -63,7 +63,7 @@ export default function CancelGuide() {
     >
       <T variant="title">Скасувати {sub.name}</T>
       <T variant="body" muted>
-        Наступне списання {formatUAH(chargeUAH(sub, rates))} — {formatDate(sub.nextCharge)},{' '}
+        Наступне списання {formatUAH(chargeUAH(sub, rates))} буде {formatDate(sub.nextCharge)},{' '}
         {relativeDay(sub.nextCharge, today)}. Скасуйте до цієї дати, і гроші не спишуться.
       </T>
 

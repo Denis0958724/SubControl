@@ -19,7 +19,7 @@ export interface Service {
   };
 }
 
-const viaStores = 'Якщо оформлювали в застосунку на телефоні — скасування тільки через App Store або Google Play (кнопки нижче)';
+const viaStores = 'Оформлювали в застосунку на телефоні? Тоді скасування тільки через App Store або Google Play, кнопки нижче';
 
 /**
  * Order matters for matching: specific services first, store aggregators last.
@@ -49,7 +49,7 @@ export const SERVICES: Service[] = [
     cancel: {
       url: 'https://www.spotify.com/account/subscription/',
       steps: [
-        'Відкрийте акаунт Spotify у браузері — у застосунку скасувати не можна',
+        'Відкрийте акаунт Spotify у браузері. У застосунку скасувати не можна',
         'Оберіть «Керувати планом», потім «Скасувати Premium»',
         'Після кінця періоду акаунт стане безкоштовним',
       ],
@@ -81,7 +81,7 @@ export const SERVICES: Service[] = [
       steps: [
         'Відкрийте налаштування Google One',
         'Натисніть «Скасувати підписку»',
-        'Якщо оплачували через Google Play — скасуйте там',
+        'Якщо оплачували через Google Play, скасуйте там',
       ],
     },
   },
@@ -150,7 +150,7 @@ export const SERVICES: Service[] = [
     name: 'Київстар ТБ',
     color: '#0A5BD3',
     currency: 'UAH',
-    match: /kyivstar|київстар/i,
+    match: /kyivstar\s*tv|київстар\s*тб|kyivstar\s*тб/i,
     cancel: {
       url: 'https://tv.kyivstar.ua',
       steps: [
@@ -170,7 +170,7 @@ export const SERVICES: Service[] = [
       url: 'https://account.microsoft.com/services',
       steps: [
         'Відкрийте сторінку служб Microsoft',
-        'Біля Game Pass — «Керування», потім «Скасувати підписку»',
+        'Біля Game Pass натисніть «Керування», потім «Скасувати підписку»',
         'Підтвердіть скасування',
       ],
     },
@@ -185,7 +185,7 @@ export const SERVICES: Service[] = [
       url: 'https://account.microsoft.com/services',
       steps: [
         'Відкрийте сторінку служб Microsoft',
-        'Біля Microsoft 365 — «Керування», потім «Скасувати підписку»',
+        'Біля Microsoft 365 натисніть «Керування», потім «Скасувати підписку»',
         'Підтвердіть скасування',
       ],
     },
@@ -227,7 +227,7 @@ export const SERVICES: Service[] = [
     cancel: {
       steps: [
         viaStores,
-        'Якщо оплачували через бота @PremiumBot — відкрийте його і перевірте статус підписки',
+        'Якщо оплачували через бота @PremiumBot, відкрийте його і перевірте статус підписки',
       ],
     },
   },
@@ -271,14 +271,14 @@ export const SERVICES: Service[] = [
       steps: [
         'Відкрийте «Плани» в акаунті Adobe',
         '«Керувати планом», потім «Скасувати план»',
-        'Річний план з помісячною оплатою може мати штраф за дострокове скасування — Adobe покаже суму перед підтвердженням',
+        'Річний план з помісячною оплатою може мати штраф за дострокове скасування. Adobe покаже суму перед підтвердженням',
       ],
     },
   },
   {
     id: 'notion',
     name: 'Notion',
-    color: '#37352F',
+    color: '#6B6A66',
     currency: 'USD',
     match: /notion/i,
     cancel: {
@@ -314,7 +314,7 @@ export const SERVICES: Service[] = [
   {
     id: 'apple',
     name: 'Apple',
-    color: '#3A3A3C',
+    color: '#6E6E73',
     currency: 'USD',
     aggregator: true,
     match: /apple|itunes/i,
@@ -348,7 +348,7 @@ export const SERVICES: Service[] = [
 export const GENERIC_CANCEL_STEPS = [
   'Знайдіть у сервісі розділ «Акаунт», «Оплата» або «Підписка»',
   'Вимкніть автопродовження або скасуйте план',
-  'Якщо платите через App Store чи Google Play — скасування тільки там',
+  'Якщо платите через App Store чи Google Play, скасування тільки там',
 ];
 
 /** Services shown first on the "add" screen. */

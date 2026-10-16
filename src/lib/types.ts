@@ -21,7 +21,7 @@ export interface Subscription {
   status: 'active' | 'cancelled';
   /** how many people share the cost (1 = only you) */
   sharedWith: number;
-  source: 'manual' | 'monobank';
+  source: 'manual' | 'monobank' | 'statement';
   createdAt: ISODate;
   cancelledAt?: ISODate;
 }

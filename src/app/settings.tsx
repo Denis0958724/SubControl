@@ -40,7 +40,7 @@ export default function SettingsScreen() {
     try {
       setRates(await fetchRates());
     } catch {
-      inform('Курс не оновився', 'Немає звʼязку з банком. Спробуйте пізніше — поки що рахуємо за останнім курсом.');
+      inform('Курс не оновився', 'Немає звʼязку з банком. Спробуйте пізніше. Поки рахуємо за останнім курсом.');
     } finally {
       setRefreshing(false);
     }
@@ -80,7 +80,7 @@ export default function SettingsScreen() {
   const rateTime = new Date(rates.updatedAt);
   const rateHint =
     rates.source === 'fallback'
-      ? 'Збережений курс — оновіть, коли буде інтернет'
+      ? 'Збережений курс. Оновіть, коли буде інтернет'
       : `${RATE_SOURCE_LABEL[rates.source]}, оновлено ${rateTime.getDate()}.${String(rateTime.getMonth() + 1).padStart(2, '0')} о ${rateTime.getHours()}:${String(rateTime.getMinutes()).padStart(2, '0')}`;
 
   return (
@@ -93,7 +93,7 @@ export default function SettingsScreen() {
             icon="star"
             tone="accent"
             title="SubControl Pro"
-            hint="Автопошук у monobank, родинний розподіл, без обмежень"
+            hint="Автопошук у виписці банку, родинний розподіл, без обмежень"
             onPress={() => router.push('/pro')}
           />
         )}
@@ -148,30 +148,29 @@ export default function SettingsScreen() {
         />
       </Group>
 
-      <SectionTitle>monobank</SectionTitle>
+      <SectionTitle>Банки</SectionTitle>
       <Group>
-        {monoConnected ? (
+        <Line
+          icon="bolt"
+          title="Знайти підписки у виписці"
+          hint="monobank, ПриватБанк та інші банки"
+          right={!isPro ? <ProBadge /> : undefined}
+          onPress={() => router.push('/import')}
+        />
+        {monoConnected && (
           <>
-            <Line icon="bolt" title="Знайти нові підписки" onPress={() => router.push('/import')} />
             <Divider inset={space(12)} />
             <Line
               icon="trash"
               tone="danger"
-              title="Видалити токен з телефона"
+              title="Видалити токен monobank"
               onPress={async () => {
-                if (!(await confirm('Видалити токен?', 'Щоб знову шукати підписки, знадобиться новий токен.', 'Видалити', true))) return;
+                if (!(await confirm('Видалити токен?', 'Щоб знову шукати підписки в monobank, знадобиться новий токен.', 'Видалити', true))) return;
                 await forgetToken();
                 setMonoConnected(false);
               }}
             />
           </>
-        ) : (
-          <Line
-            icon="bolt"
-            title="Підключити для автопошуку"
-            right={!isPro ? <ProBadge /> : undefined}
-            onPress={() => router.push('/import')}
-          />
         )}
       </Group>
 

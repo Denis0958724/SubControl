@@ -7,20 +7,23 @@ import { Icon } from '../components/Icon';
 import { Divider, Group, Header, Screen, SectionTitle } from '../components/Layout';
 import { Monogram } from '../components/Monogram';
 import { T } from '../components/T';
+import { BANKS, findBank, type BankId } from '../lib/banks';
 import { colorForName, findService } from '../lib/catalog';
-import { CYCLE_LABEL, MONTHS, formatDate, todayISO } from '../lib/dates';
+import { CYCLE_LABEL, MONTHS, formatDate, plural, todayISO } from '../lib/dates';
 import { demoStatement } from '../lib/demo';
 import { detectSubscriptions, type Candidate, type StatementItem } from '../lib/detect';
 import { formatMoney, formatUAH, toUAH } from '../lib/money';
 import { MonobankError, TOKEN_URL, scanStatement } from '../lib/monobank';
 import { openExternal } from '../lib/open';
+import { pickStatements } from '../lib/pickStatement';
 import { loadToken, saveToken } from '../lib/secure';
+import type { Rates } from '../lib/types';
 import { useStore } from '../store';
 import { fonts, noWebOutline, radius, space, usePalette } from '../theme';
 
 const PERIODS = 3;
 
-type Phase = 'intro' | 'scanning' | 'results';
+type Phase = 'choose' | 'mono' | 'file' | 'scanning' | 'results';
 
 export default function Import() {
   const p = usePalette();
@@ -30,13 +33,17 @@ export default function Import() {
   const add = useStore((s) => s.add);
   const setMonoConnected = useStore((s) => s.setMonoConnected);
 
-  const [phase, setPhase] = useState<Phase>('intro');
+  const [phase, setPhase] = useState<Phase>('choose');
+  const [bank, setBank] = useState<BankId>('privat');
   const [token, setToken] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [reading, setReading] = useState(false);
   const [step, setStep] = useState(0);
   const [stepLabel, setStepLabel] = useState('');
   const [found, setFound] = useState<Candidate[]>([]);
+  const [summary, setSummary] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [source, setSource] = useState<'monobank' | 'statement'>('statement');
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -55,41 +62,44 @@ export default function Import() {
           s.name.toLowerCase() === c.name.toLowerCase()),
     );
 
-  const finish = (all: StatementItem[]) => {
+  const finish = (all: StatementItem[], note: string) => {
     const list = detectSubscriptions(all, today);
     setFound(list);
     setSelected(new Set(list.filter((c) => c.confidence === 'high' && !already(c)).map((c) => c.key)));
+    setSummary(note);
     setPhase('results');
   };
 
-  const progress = (i: number, all: StatementItem[], from: Date) => {
-    setStep(i + 1);
-    setStepLabel(MONTHS[from.getMonth()].toLowerCase());
-    setFound(detectSubscriptions(all, today));
+  const opsNote = (n: number) => `Переглянуто ${n} ${plural(n, ['операцію', 'операції', 'операцій'])}.`;
+
+  const openBank = (id: BankId) => {
+    setErrors([]);
+    setBank(id);
+    setPhase(id === 'monobank' ? 'mono' : 'file');
   };
 
   const runDemo = async () => {
-    setError(null);
+    setErrors([]);
+    setSource('statement');
     setPhase('scanning');
     const all = demoStatement(today, rates.USD);
     for (let i = 0; i < PERIODS; i++) {
-      await new Promise((r) => setTimeout(r, 650));
+      await new Promise((r) => setTimeout(r, 600));
       const from = new Date(Date.now() - (i + 1) * 31 * 86_400_000);
-      progress(
-        i,
-        all.filter((it) => it.time * 1000 >= from.getTime()),
-        from,
-      );
+      setStep(i + 1);
+      setStepLabel(MONTHS[from.getMonth()].toLowerCase());
+      setFound(detectSubscriptions(all.filter((it) => it.time * 1000 >= from.getTime()), today));
     }
-    finish(all);
+    finish(all, `Це приклад. ${opsNote(all.length)}`);
   };
 
-  const runReal = async () => {
+  const runMonobank = async () => {
     if (!isPro) {
       router.push('/pro');
       return;
     }
-    setError(null);
+    setErrors([]);
+    setSource('monobank');
     setPhase('scanning');
     setStep(0);
     setFound([]);
@@ -103,16 +113,41 @@ export default function Import() {
         PERIODS,
         (i, items, from) => {
           collected.push(...items);
-          progress(i, [...collected], from);
+          setStep(i + 1);
+          setStepLabel(MONTHS[from.getMonth()].toLowerCase());
+          setFound(detectSubscriptions([...collected], today));
         },
         abort.current.signal,
       );
-      finish(collected);
+      finish(collected, opsNote(collected.length));
     } catch (e) {
       if (abort.current?.signal.aborted) return;
-      setError(e instanceof MonobankError ? e.message : 'Не вдалося отримати виписку. Спробуйте ще раз.');
-      if (collected.length) finish(collected);
-      else setPhase('intro');
+      setErrors([e instanceof MonobankError ? e.message : 'Не вдалося отримати виписку. Спробуйте ще раз.']);
+      if (collected.length) finish(collected, opsNote(collected.length));
+      else setPhase('mono');
+    }
+  };
+
+  const runFile = async () => {
+    if (!isPro) {
+      router.push('/pro');
+      return;
+    }
+    setErrors([]);
+    setReading(true);
+    try {
+      const picked = await pickStatements();
+      if (!picked) return;
+      const problems = picked.failed.map((f) => `${f.name}: ${f.reason}`);
+      setErrors(problems);
+      if (!picked.items.length) return;
+      setSource('statement');
+      const files = picked.files.length === 1 ? 'файлу' : `${picked.files.length} файлів`;
+      finish(picked.items, `${opsNote(picked.items.length).slice(0, -1)} з ${files}.`);
+    } catch {
+      setErrors(['Не вдалося відкрити файл. Спробуйте ще раз.']);
+    } finally {
+      setReading(false);
     }
   };
 
@@ -129,7 +164,7 @@ export default function Import() {
         nextCharge: c.nextCharge,
         remind: true,
         sharedWith: 1,
-        source: 'monobank',
+        source,
         color: service?.color ?? colorForName(c.name),
       });
     }
@@ -144,20 +179,31 @@ export default function Import() {
       return next;
     });
 
+  const demoButton = <Button title="Спробувати на прикладі" kind="ghost" compact onPress={runDemo} />;
+
   if (phase === 'scanning') {
     return (
-      <Screen header={<Header onBack={() => { abort.current?.abort(); setPhase('intro'); }} backIcon="close" />}>
+      <Screen
+        header={
+          <Header
+            backIcon="close"
+            onBack={() => {
+              abort.current?.abort();
+              setPhase(source === 'monobank' ? 'mono' : 'choose');
+            }}
+          />
+        }
+      >
         <T variant="title">Шукаю підписки</T>
-        <T variant="body" muted>
-          monobank видає виписку по місяцю за раз і не частіше за раз на хвилину, тому це займе близько{' '}
-          {PERIODS - 1} хвилин. Можна не закривати екран.
-        </T>
+        {source === 'monobank' && (
+          <T variant="body" muted>
+            monobank віддає виписку по місяцю і не частіше разу на хвилину. Тож це займе близько {PERIODS - 1}{' '}
+            хвилин. Екран можна не закривати, але й дивитися на нього не обовʼязково.
+          </T>
+        )}
         <View style={styles.bars}>
           {Array.from({ length: PERIODS }, (_, i) => (
-            <View
-              key={i}
-              style={[styles.bar, { backgroundColor: i < step ? p.cobalt : p.track }]}
-            />
+            <View key={i} style={[styles.bar, { backgroundColor: i < step ? p.cobalt : p.track }]} />
           ))}
         </View>
         <T variant="label" muted>
@@ -184,7 +230,7 @@ export default function Import() {
     const count = selected.size;
     return (
       <Screen
-        header={<Header title="Знайдено" onBack={() => setPhase('intro')} />}
+        header={<Header title="Знайдено" onBack={() => setPhase('choose')} />}
         footer={
           found.length ? (
             <Button
@@ -197,35 +243,43 @@ export default function Import() {
           )
         }
       >
-        {error && <ErrorNote text={error} />}
+        {errors.map((e) => (
+          <ErrorNote key={e} text={e} />
+        ))}
+        <T variant="caption" muted>
+          {summary}
+        </T>
         {found.length === 0 ? (
           <T variant="body" muted>
-            Регулярних списань за 3 місяці не знайшлося. Додайте підписки вручну — це займе хвилину.
+            Регулярних списань не знайшлося. Або підписок справді немає, або виписка коротка. Візьміть період від 2
+            місяців чи додайте підписки вручну.
           </T>
         ) : (
           <>
             <T variant="body" muted>
-              Позначені — точно підписки. Решта схожа на регулярні платежі: перевірте й оберіть самі.
+              Позначені точно підписки. Решта схожа на регулярні платежі: перевірте й оберіть самі.
             </T>
             <Group>
-              {found.map((c, i) => {
-                const dup = already(c);
-                return (
-                  <View key={c.key}>
-                    {i > 0 && <Divider inset={space(17)} />}
-                    <Pressable
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: selected.has(c.key) }}
-                      onPress={() => {
-                        tap();
-                        toggle(c.key);
-                      }}
-                    >
-                      <CandidateRow c={c} rates={rates} checked={selected.has(c.key)} note={dup ? 'вже у списку' : undefined} />
-                    </Pressable>
-                  </View>
-                );
-              })}
+              {found.map((c, i) => (
+                <View key={c.key}>
+                  {i > 0 && <Divider inset={space(17)} />}
+                  <Pressable
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selected.has(c.key) }}
+                    onPress={() => {
+                      tap();
+                      toggle(c.key);
+                    }}
+                  >
+                    <CandidateRow
+                      c={c}
+                      rates={rates}
+                      checked={selected.has(c.key)}
+                      note={already(c) ? 'вже у списку' : undefined}
+                    />
+                  </Pressable>
+                </View>
+              ))}
             </Group>
           </>
         )}
@@ -233,62 +287,134 @@ export default function Import() {
     );
   }
 
-  return (
-    <Screen
-      header={<Header onBack={() => router.back()} />}
-      footer={
-        <View style={styles.footer}>
+  if (phase === 'mono') {
+    return (
+      <Screen
+        header={<Header onBack={() => setPhase('choose')} />}
+        footer={
           <Button
             title={isPro ? 'Почати пошук' : 'Почати пошук з Pro'}
             icon={isPro ? 'search' : 'lock'}
-            onPress={runReal}
+            onPress={runMonobank}
             disabled={isPro && token.trim().length < 20}
           />
-          <Button title="Спробувати на прикладі" kind="ghost" onPress={runDemo} />
-        </View>
-      }
-    >
+        }
+      >
+        <T variant="title">monobank</T>
+        <T variant="body" muted>
+          SubControl сам завантажить виписку картки за 3 місяці. Для цього потрібен токен від monobank.
+        </T>
+        {errors.map((e) => (
+          <ErrorNote key={e} text={e} />
+        ))}
+        <Group style={styles.steps}>
+          <Step n={1} text="Відкрийте api.monobank.ua і відскануйте QR-код у застосунку monobank">
+            <Button
+              title="Відкрити api.monobank.ua"
+              icon="external"
+              kind="secondary"
+              compact
+              onPress={() => openExternal(TOKEN_URL)}
+              style={styles.stepButton}
+            />
+          </Step>
+          <Step n={2} text="Скопіюйте токен і вставте сюди">
+            <TextInput
+              value={token}
+              onChangeText={setToken}
+              placeholder="Токен monobank"
+              placeholderTextColor={p.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry
+              style={[styles.tokenInput, noWebOutline, { backgroundColor: p.paper, color: p.ink }]}
+              accessibilityLabel="Токен monobank"
+            />
+          </Step>
+          <Step n={3} text={`Натисніть «Почати пошук». Це займе близько ${PERIODS - 1} хвилин`} />
+        </Group>
+        <Privacy text="Токен дає лише переглядати виписку. Переказати з ним гроші неможливо. Зберігається тільки в захищеному сховищі телефона." />
+        <Button title="Не хочу токен, завантажу файл" kind="ghost" compact onPress={() => setPhase('file')} />
+      </Screen>
+    );
+  }
+
+  if (phase === 'file') {
+    const b = findBank(bank);
+    return (
+      <Screen
+        header={<Header onBack={() => setPhase('choose')} />}
+        footer={
+          <Button
+            title={isPro ? 'Обрати файл' : 'Обрати файл з Pro'}
+            icon={isPro ? 'file' : 'lock'}
+            onPress={runFile}
+            loading={reading}
+          />
+        }
+      >
+        <T variant="title">{bank === 'other' ? 'Виписка з банку' : `Виписка ${b.name}`}</T>
+        <T variant="body" muted>
+          Знайдемо регулярні списання у файлі виписки. Підійде Excel або CSV, можна кілька файлів одразу, якщо
+          карток кілька.
+        </T>
+        {errors.map((e) => (
+          <ErrorNote key={e} text={e} />
+        ))}
+        <Group style={styles.steps}>
+          {b.fileSteps.map((s, i) => (
+            <Step key={s} n={i + 1} text={s} />
+          ))}
+        </Group>
+        {b.desktopTip && (
+          <T variant="caption" muted style={styles.tip}>
+            {b.desktopTip}
+          </T>
+        )}
+        <Privacy text="Файл читається тільки на телефоні. Нікуди не відправляємо й не зберігаємо, лише знайдені підписки." />
+        {demoButton}
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen header={<Header onBack={() => router.back()} />}>
       <T variant="title">Знайти підписки автоматично</T>
       <T variant="body" muted>
-        SubControl перегляне виписку вашої картки monobank за 3 місяці й покаже регулярні списання. Що додати —
-        вирішуєте ви.
+        Оберіть банк, з якого платите за підписки. SubControl перегляне витрати за 3 місяці й покаже, що
+        повторюється.
       </T>
-      {error && <ErrorNote text={error} />}
-
-      <Group style={styles.steps}>
-        <Step n={1} text="Відкрийте api.monobank.ua і відскануйте QR-код у застосунку monobank">
-          <Button
-            title="Відкрити api.monobank.ua"
-            icon="external"
-            kind="secondary"
-            compact
-            onPress={() => openExternal(TOKEN_URL)}
-            style={styles.stepButton}
-          />
-        </Step>
-        <Step n={2} text="Скопіюйте токен і вставте сюди">
-          <TextInput
-            value={token}
-            onChangeText={setToken}
-            placeholder="Токен monobank"
-            placeholderTextColor={p.muted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            secureTextEntry
-            style={[styles.tokenInput, noWebOutline, { backgroundColor: p.paper, color: p.ink }]}
-            accessibilityLabel="Токен monobank"
-          />
-        </Step>
-        <Step n={3} text={`Натисніть «Почати пошук» — це займе близько ${PERIODS - 1} хвилин`} />
+      <Group>
+        {BANKS.map((bk, i) => (
+          <View key={bk.id}>
+            {i > 0 && <Divider inset={space(17)} />}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                tap();
+                openBank(bk.id);
+              }}
+              style={({ pressed }) => [styles.bankRow, { opacity: pressed ? 0.6 : 1 }]}
+            >
+              <Monogram name={bk.name} color={bk.color} />
+              <View style={styles.flex}>
+                <T variant="heading" style={{ fontSize: 16 }}>
+                  {bk.name}
+                </T>
+                <T variant="caption" muted>
+                  {bk.hint}
+                </T>
+              </View>
+              <Icon name="chevronRight" size={18} color={p.muted} />
+            </Pressable>
+          </View>
+        ))}
       </Group>
-
-      <View style={styles.privacy}>
-        <Icon name="shield" size={20} color={p.green} />
-        <T variant="caption" muted style={styles.flex}>
-          З цим токеном можна лише переглядати виписку — переказати гроші неможливо. Він зберігається тільки в
-          захищеному сховищі вашого телефона, і його можна видалити в налаштуваннях.
-        </T>
-      </View>
+      <T variant="caption" muted style={styles.tip}>
+        Чому не напряму з Приват24 чи іншого банку? Банки відкривають доступ до виписки тільки застосункам з
+        дозволом НБУ. Поки такого дозволу немає, файл виписки працює з будь-яким банком.
+      </T>
+      {demoButton}
     </Screen>
   );
 }
@@ -310,6 +436,18 @@ function Step({ n, text, children }: { n: number; text: string; children?: React
   );
 }
 
+function Privacy({ text }: { text: string }) {
+  const p = usePalette();
+  return (
+    <View style={styles.privacy}>
+      <Icon name="shield" size={20} color={p.green} />
+      <T variant="caption" muted style={styles.flex}>
+        {text}
+      </T>
+    </View>
+  );
+}
+
 function ErrorNote({ text }: { text: string }) {
   const p = usePalette();
   return (
@@ -321,17 +459,7 @@ function ErrorNote({ text }: { text: string }) {
   );
 }
 
-function CandidateRow({
-  c,
-  rates,
-  checked,
-  note,
-}: {
-  c: Candidate;
-  rates: ReturnType<typeof useStore.getState>['rates'];
-  checked?: boolean;
-  note?: string;
-}) {
+function CandidateRow({ c, rates, checked, note }: { c: Candidate; rates: Rates; checked?: boolean; note?: string }) {
   const p = usePalette();
   const color = findService(c.serviceId)?.color ?? colorForName(c.name);
   const uah = toUAH(c.amount, c.currency, rates);
@@ -344,10 +472,7 @@ function CandidateRow({
     <View style={styles.cRow}>
       {checked !== undefined && (
         <View
-          style={[
-            styles.check,
-            checked ? { backgroundColor: p.cobalt, borderColor: p.cobalt } : { borderColor: p.line },
-          ]}
+          style={[styles.check, checked ? { backgroundColor: p.cobalt, borderColor: p.cobalt } : { borderColor: p.line }]}
         >
           {checked && <Icon name="check" size={16} color={p.onCobalt} strokeWidth={2.6} />}
         </View>
@@ -376,8 +501,7 @@ function CandidateRow({
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  footer: { gap: space(1) },
+  flex: { flex: 1, minWidth: 0 },
   steps: { padding: space(4), gap: space(5), marginTop: space(2) },
   step: { flexDirection: 'row', gap: space(3), alignItems: 'flex-start' },
   num: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
@@ -388,11 +512,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: space(4),
     fontFamily: fonts.regular,
     fontSize: 16,
+    minWidth: 0,
   },
+  tip: { paddingHorizontal: space(1) },
   privacy: { flexDirection: 'row', gap: space(3), paddingHorizontal: space(1), marginTop: space(2) },
   bars: { flexDirection: 'row', gap: space(2), marginTop: space(3) },
   bar: { flex: 1, height: 8, borderRadius: 4 },
   error: { borderRadius: 16, padding: space(4) },
+  bankRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(3),
+    paddingHorizontal: space(4),
+    paddingVertical: space(3),
+    minHeight: 68,
+  },
   cRow: {
     flexDirection: 'row',
     alignItems: 'center',
