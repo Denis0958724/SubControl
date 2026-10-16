@@ -1,58 +1,9 @@
-import { findService } from './catalog';
-import { addCycle, addDays, fromISO, rollForward } from './dates';
-import type { StatementItem } from './detect';
-import type { Cycle, Currency, ISODate, Subscription } from './types';
+import { findService } from '../catalog';
+import { addCycle, addDays, fromISO, rollForward } from '../dates';
+import type { StatementItem } from '../detect';
+import type { Cycle, Currency, ISODate, Subscription } from '../types';
 
-function demoSub(
-  today: ISODate,
-  serviceId: string,
-  amount: number,
-  currency: Currency,
-  cycle: Cycle,
-  offsetDays: number,
-  extra: Partial<Subscription> = {},
-): Subscription {
-  const s = findService(serviceId)!;
-  const first = addDays(today, offsetDays);
-  const anchor = fromISO(first).getDate();
-  const nextCharge = rollForward(first, cycle, anchor, today);
-  return {
-    id: `demo-${serviceId}`,
-    serviceId,
-    name: s.name,
-    amount,
-    currency,
-    cycle,
-    nextCharge,
-    anchorDay: anchor,
-    color: s.color,
-    remind: true,
-    status: 'active',
-    sharedWith: 1,
-    source: 'manual',
-    createdAt: addDays(today, -90),
-    ...extra,
-  };
-}
-
-/** Sample data so people can see the app filled in before adding their own. */
-export function demoSubscriptions(today: ISODate): Subscription[] {
-  return [
-    demoSub(today, 'netflix', 7.99, 'USD', 'month', 1),
-    demoSub(today, 'spotify', 149, 'UAH', 'month', -3),
-    demoSub(today, 'youtube', 249, 'UAH', 'month', 11, { sharedWith: 4 }),
-    demoSub(today, 'megogo', 199, 'UAH', 'month', -6),
-    demoSub(today, 'chatgpt', 20, 'USD', 'month', 9),
-    demoSub(today, 'duolingo', 59.99, 'USD', 'year', 74),
-    demoSub(today, 'adobe', 22.99, 'USD', 'month', 3, {
-      status: 'cancelled',
-      cancelledAt: addDays(today, -20),
-      remind: false,
-    }),
-  ];
-}
-
-/** A made-up monobank statement for the import demo: three months of a typical card. */
+/** A made-up monobank statement for tests: three months of a typical card. */
 export function demoStatement(today: ISODate, usd = 44.96): StatementItem[] {
   const items: StatementItem[] = [];
   let n = 0;

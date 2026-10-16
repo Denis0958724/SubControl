@@ -38,4 +38,6 @@ export interface Settings {
   leadDays: 1 | 3 | 7;
   /** hour of day for reminders, 0–23 */
   hour: number;
+  /** quiet interface sounds */
+  sounds: boolean;
 }

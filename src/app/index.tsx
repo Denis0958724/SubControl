@@ -18,7 +18,6 @@ export default function Home() {
   const subs = useStore((s) => s.subs);
   const rates = useStore((s) => s.rates);
   const isPro = useStore((s) => s.isPro);
-  const loadDemo = useStore((s) => s.loadDemo);
   const [showCancelled, setShowCancelled] = useState(false);
   const today = todayISO();
 
@@ -81,7 +80,6 @@ export default function Home() {
               kind="secondary"
               onPress={() => router.push('/import')}
             />
-            <Button title="Показати на прикладі" kind="ghost" onPress={loadDemo} />
           </View>
         </View>
       ) : (

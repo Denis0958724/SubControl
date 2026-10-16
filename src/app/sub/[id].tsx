@@ -6,6 +6,7 @@ import { Divider, Group, Header, Line, Screen } from '../../components/Layout';
 import { Monogram } from '../../components/Monogram';
 import { T } from '../../components/T';
 import { Toggle } from '../../components/Toggle';
+import { feedback } from '../../lib/feedback';
 import { CYCLE_LABEL, formatDate, plural, relativeDay, todayISO } from '../../lib/dates';
 import { confirm } from '../../lib/confirm';
 import { chargeUAH, formatMoney, formatUAH, monthlyUAH, yearlyUAH } from '../../lib/money';
@@ -42,6 +43,7 @@ export default function SubscriptionScreen() {
   const onDelete = async () => {
     const ok = await confirm('Видалити зі списку?', `${sub.name} зникне з SubControl. Сама підписка в сервісі не скасується.`, 'Видалити', true);
     if (ok) {
+      feedback('cancel');
       router.back();
       remove(sub.id);
     }
@@ -134,7 +136,13 @@ export default function SubscriptionScreen() {
 
       <View style={styles.actions}>
         {cancelled ? (
-          <Button title="Відновити підписку" kind="secondary" icon="refresh" onPress={() => restore(sub.id)} />
+          <Button
+            title="Відновити підписку"
+            kind="secondary"
+            icon="refresh"
+            sound="success"
+            onPress={() => restore(sub.id)}
+          />
         ) : (
           <Button title="Як скасувати" kind="secondary" onPress={() => router.push(`/cancel/${sub.id}`)} />
         )}

@@ -1,20 +1,25 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Share, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
+import { Platform, Pressable, Share, StyleSheet, View } from 'react-native';
 
 import { Divider, Group, Header, Line, ProBadge, Screen, SectionTitle } from '../components/Layout';
 import { Segmented } from '../components/Segmented';
 import { T } from '../components/T';
+import { Toggle } from '../components/Toggle';
 import { CYCLE_LABEL } from '../lib/dates';
 import { confirm, inform } from '../lib/confirm';
 import { formatNumber, monthlyUAH } from '../lib/money';
+import { openExternal } from '../lib/open';
+import { BILLING, manageSubscriptionUrl } from '../lib/purchases';
 import { fetchRates, RATE_SOURCE_LABEL } from '../lib/rates';
 import { forgetToken } from '../lib/secure';
 import type { Settings } from '../lib/types';
 import { useStore } from '../store';
-import { space } from '../theme';
+import { space, usePalette } from '../theme';
 
 export default function SettingsScreen() {
+  const p = usePalette();
   const settings = useStore((s) => s.settings);
   const setSettings = useStore((s) => s.setSettings);
   const isPro = useStore((s) => s.isPro);
@@ -23,7 +28,6 @@ export default function SettingsScreen() {
   const monoConnected = useStore((s) => s.monoConnected);
   const setMonoConnected = useStore((s) => s.setMonoConnected);
   const subs = useStore((s) => s.subs);
-  const loadDemo = useStore((s) => s.loadDemo);
   const resetAll = useStore((s) => s.resetAll);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -87,7 +91,20 @@ export default function SettingsScreen() {
     <Screen header={<Header title="Налаштування" onBack={() => router.back()} />}>
       <Group>
         {isPro ? (
-          <Line icon="star" tone="accent" title="SubControl Pro активний" hint="Дякуємо, що підтримуєте застосунок" />
+          <>
+            <Line icon="star" tone="accent" title="SubControl Pro активний" hint="Дякуємо, що підтримуєте застосунок" />
+            {BILLING === 'store' && (
+              <>
+                <Divider inset={space(12)} />
+                <Line
+                  icon="card"
+                  title="Керувати підпискою Pro"
+                  hint={Platform.OS === 'android' ? 'У Google Play' : 'В App Store'}
+                  onPress={async () => openExternal(await manageSubscriptionUrl())}
+                />
+              </>
+            )}
+          </>
         ) : (
           <Line
             icon="star"
@@ -130,6 +147,16 @@ export default function SettingsScreen() {
             { value: 12, label: '12:00' },
             { value: 19, label: '19:00' },
           ]}
+        />
+      </Group>
+
+      <SectionTitle>Звуки</SectionTitle>
+      <Group>
+        <Line
+          icon="sound"
+          title="Звуки натискань"
+          hint="Тихі, і мовчать, коли телефон на беззвучному"
+          right={<Toggle value={settings.sounds} onChange={(sounds) => setSettings({ sounds })} label="Звуки натискань" />}
         />
       </Group>
 
@@ -184,17 +211,6 @@ export default function SettingsScreen() {
         />
         <Divider inset={space(12)} />
         <Line
-          icon="refresh"
-          title="Показати на прикладі"
-          hint="Замінить ваш список прикладом"
-          onPress={async () => {
-            if (subs.length && !(await confirm('Замінити список прикладом?', 'Ваші підписки буде видалено.', 'Замінити', true))) return;
-            loadDemo();
-            router.back();
-          }}
-        />
-        <Divider inset={space(12)} />
-        <Line
           icon="trash"
           tone="danger"
           title="Видалити всі дані"
@@ -213,8 +229,13 @@ export default function SettingsScreen() {
           Підписки зберігаються тільки на цьому телефоні. SubControl не має доступу до ваших грошей і нічого не
           списує сам.
         </T>
+        <Pressable accessibilityRole="link" onPress={() => router.push('/privacy')} hitSlop={8}>
+          <T variant="caption" color={p.cobalt} center>
+            Політика конфіденційності
+          </T>
+        </Pressable>
         <T variant="caption" muted center>
-          SubControl 1.0
+          SubControl {Constants.expoConfig?.version ?? ''}
         </T>
       </View>
     </Screen>

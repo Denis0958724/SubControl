@@ -4,7 +4,6 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { colorForName, findService } from './lib/catalog';
 import { fromISO, rollForward, todayISO } from './lib/dates';
-import { demoSubscriptions } from './lib/demo';
 import { FALLBACK_RATES } from './lib/money';
 import type { Rates, Settings, Subscription } from './lib/types';
 
@@ -33,10 +32,11 @@ interface State {
   setRates: (rates: Rates) => void;
   setPro: (isPro: boolean) => void;
   setMonoConnected: (connected: boolean) => void;
-  loadDemo: () => void;
   resetAll: () => void;
   rollDates: () => void;
 }
+
+const DEFAULT_SETTINGS: Settings = { leadDays: 1, hour: 10, sounds: true };
 
 const newId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
@@ -44,7 +44,7 @@ export const useStore = create<State>()(
   persist(
     (set, get) => ({
       subs: [],
-      settings: { leadDays: 1, hour: 10 },
+      settings: DEFAULT_SETTINGS,
       rates: FALLBACK_RATES,
       isPro: false,
       monoConnected: false,
@@ -106,9 +106,7 @@ export const useStore = create<State>()(
       setPro: (isPro) => set({ isPro }),
       setMonoConnected: (monoConnected) => set({ monoConnected }),
 
-      loadDemo: () => set({ subs: demoSubscriptions(todayISO()) }),
-
-      resetAll: () => set({ subs: [], isPro: false, settings: { leadDays: 1, hour: 10 } }),
+      resetAll: () => set({ subs: [], settings: DEFAULT_SETTINGS }),
 
       /** Charges that already happened move to their next date. */
       rollDates: () => {
@@ -126,6 +124,11 @@ export const useStore = create<State>()(
       name: 'subcontrol',
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
+      // settings added in later versions get their defaults instead of disappearing
+      merge: (persisted, current) => {
+        const saved = (persisted ?? {}) as Partial<State>;
+        return { ...current, ...saved, settings: { ...DEFAULT_SETTINGS, ...saved.settings } };
+      },
       partialize: ({ subs, settings, rates, isPro, monoConnected }) => ({
         subs,
         settings,

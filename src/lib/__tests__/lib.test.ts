@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { initials, matchService } from '../catalog';
 import { addCycle, occurrencesInMonth, plural, relativeDay, rollForward } from '../dates';
-import { demoStatement } from '../demo';
+import { demoStatement } from './sampleStatement';
 import { detectSubscriptions } from '../detect';
 import { formatMoney, formatUAH, monthlyUAH, parseAmount, yearlyUAH } from '../money';
 import type { Rates, Subscription } from '../types';

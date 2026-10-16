@@ -10,6 +10,7 @@ import { Monogram } from '../components/Monogram';
 import { Segmented } from '../components/Segmented';
 import { T } from '../components/T';
 import { Toggle } from '../components/Toggle';
+import { feedback } from '../lib/feedback';
 import { colorForName, findService } from '../lib/catalog';
 import { formatDate, plural, relativeDay, todayISO } from '../lib/dates';
 import { formatUAH, parseAmount, toUAH } from '../lib/money';
@@ -56,6 +57,7 @@ export default function Edit() {
       remind,
       sharedWith,
     };
+    feedback('success');
     if (existing) {
       update(existing.id, data);
       router.back();
@@ -79,7 +81,7 @@ export default function Edit() {
   return (
     <Screen
       header={<Header title={existing ? 'Редагувати' : 'Нова підписка'} onBack={() => router.back()} />}
-      footer={<Button title="Зберегти" onPress={save} disabled={!valid} />}
+      footer={<Button title="Зберегти" onPress={save} disabled={!valid} sound={false} />}
     >
       <View style={styles.identity}>
         <Monogram name={name || '?'} color={color} size={56} />

@@ -10,10 +10,10 @@ import { T } from '../components/T';
 import { BANKS, findBank, type BankId } from '../lib/banks';
 import { colorForName, findService } from '../lib/catalog';
 import { CYCLE_LABEL, MONTHS, formatDate, plural, todayISO } from '../lib/dates';
-import { demoStatement } from '../lib/demo';
 import { detectSubscriptions, type Candidate, type StatementItem } from '../lib/detect';
 import { formatMoney, formatUAH, toUAH } from '../lib/money';
 import { MonobankError, TOKEN_URL, scanStatement } from '../lib/monobank';
+import { feedback } from '../lib/feedback';
 import { openExternal } from '../lib/open';
 import { pickStatements } from '../lib/pickStatement';
 import { loadToken, saveToken } from '../lib/secure';
@@ -64,6 +64,7 @@ export default function Import() {
 
   const finish = (all: StatementItem[], note: string) => {
     const list = detectSubscriptions(all, today);
+    if (list.length) feedback('found');
     setFound(list);
     setSelected(new Set(list.filter((c) => c.confidence === 'high' && !already(c)).map((c) => c.key)));
     setSummary(note);
@@ -76,21 +77,6 @@ export default function Import() {
     setErrors([]);
     setBank(id);
     setPhase(id === 'monobank' ? 'mono' : 'file');
-  };
-
-  const runDemo = async () => {
-    setErrors([]);
-    setSource('statement');
-    setPhase('scanning');
-    const all = demoStatement(today, rates.USD);
-    for (let i = 0; i < PERIODS; i++) {
-      await new Promise((r) => setTimeout(r, 600));
-      const from = new Date(Date.now() - (i + 1) * 31 * 86_400_000);
-      setStep(i + 1);
-      setStepLabel(MONTHS[from.getMonth()].toLowerCase());
-      setFound(detectSubscriptions(all.filter((it) => it.time * 1000 >= from.getTime()), today));
-    }
-    finish(all, `Це приклад. ${opsNote(all.length)}`);
   };
 
   const runMonobank = async () => {
@@ -152,6 +138,7 @@ export default function Import() {
   };
 
   const importSelected = () => {
+    feedback('success');
     for (const c of found) {
       if (!selected.has(c.key)) continue;
       const service = findService(c.serviceId);
@@ -178,8 +165,6 @@ export default function Import() {
       else next.add(key);
       return next;
     });
-
-  const demoButton = <Button title="Спробувати на прикладі" kind="ghost" compact onPress={runDemo} />;
 
   if (phase === 'scanning') {
     return (
@@ -237,6 +222,7 @@ export default function Import() {
               title={count ? `Додати вибрані: ${count}` : 'Оберіть, що додати'}
               onPress={importSelected}
               disabled={!count}
+              sound={false}
             />
           ) : (
             <Button title="Додати вручну" icon="plus" onPress={() => router.replace('/add')} />
@@ -372,7 +358,6 @@ export default function Import() {
           </T>
         )}
         <Privacy text="Файл читається тільки на телефоні. Нікуди не відправляємо й не зберігаємо, лише знайдені підписки." />
-        {demoButton}
       </Screen>
     );
   }
@@ -414,7 +399,6 @@ export default function Import() {
         Чому не напряму з Приват24 чи іншого банку? Банки відкривають доступ до виписки тільки застосункам з
         дозволом НБУ. Поки такого дозволу немає, файл виписки працює з будь-яким банком.
       </T>
-      {demoButton}
     </Screen>
   );
 }

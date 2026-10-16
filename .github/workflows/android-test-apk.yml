@@ -1,0 +1,72 @@
+# Test build for Android phones: an .apk you can install without Google Play.
+# Pro switches on for free in this build. Store builds go through EAS (see README).
+name: Тестовий APK для Android
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-test-apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      EXPO_PUBLIC_TEST_PRO: '1'
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install
+        run: npm ci
+
+      - name: Checks
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Generate the Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build
+        working-directory: android
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> gradle.properties
+          ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Name the file
+        run: |
+          VERSION=$(node -p "require('./app.json').expo.version")
+          cp android/app/build/outputs/apk/release/app-release.apk "SubControl-$VERSION-test-${{ github.run_number }}.apk"
+          echo "APK=SubControl-$VERSION-test-${{ github.run_number }}.apk" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SubControl-test-apk
+          path: ${{ env.APK }}
+          retention-days: 30
+
+      - name: Publish as a release, so the phone can download the .apk directly
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "test-${{ github.run_number }}" "$APK" \
+            --prerelease \
+            --title "Тестова збірка ${{ github.run_number }}" \
+            --notes "Тестова збірка для Android. Pro вмикається безкоштовно. Відкрийте цю сторінку з телефона, завантажте .apk і встановіть." \
+            --target "${{ github.sha }}"

@@ -1,6 +1,6 @@
-import * as Haptics from 'expo-haptics';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { feedback, tap, type Sound } from '../lib/feedback';
 import { fonts, radius, space, usePalette } from '../theme';
 import { Icon, type IconName } from './Icon';
 import { T } from './T';
@@ -16,13 +16,13 @@ interface Props {
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
   compact?: boolean;
+  /** what the press sounds like; screens that play their own result sound pass false */
+  sound?: Sound | false;
 }
 
-export function tap() {
-  if (Platform.OS !== 'web') Haptics.selectionAsync().catch(() => {});
-}
+export { tap };
 
-export function Button({ title, onPress, kind = 'primary', icon, disabled, loading, style, compact }: Props) {
+export function Button({ title, onPress, kind = 'primary', icon, disabled, loading, style, compact, sound = 'tap' }: Props) {
   const p = usePalette();
   // disabled buttons stay solid: a see-through button over a list looks broken
   const bg = disabled && kind !== 'ghost'
@@ -35,7 +35,7 @@ export function Button({ title, onPress, kind = 'primary', icon, disabled, loadi
       accessibilityState={{ disabled }}
       disabled={disabled || loading}
       onPress={() => {
-        tap();
+        if (sound) feedback(sound);
         onPress();
       }}
       style={({ pressed }) => [

@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 
@@ -14,6 +13,7 @@ import {
 } from '../../lib/catalog';
 import { formatDate, relativeDay, todayISO } from '../../lib/dates';
 import { chargeUAH, formatUAH } from '../../lib/money';
+import { feedback } from '../../lib/feedback';
 import { openExternal } from '../../lib/open';
 import { useStore } from '../../store';
 import { fonts, space, usePalette } from '../../theme';
@@ -52,14 +52,14 @@ export default function CancelGuide() {
 
   const done = () => {
     cancel(sub.id);
-    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    feedback('cancel');
     router.dismissTo('/');
   };
 
   return (
     <Screen
       header={<Header onBack={() => router.back()} />}
-      footer={<Button title="Я скасував(ла) підписку" icon="check" onPress={done} />}
+      footer={<Button title="Я скасував(ла) підписку" icon="check" onPress={done} sound={false} />}
     >
       <T variant="title">Скасувати {sub.name}</T>
       <T variant="body" muted>

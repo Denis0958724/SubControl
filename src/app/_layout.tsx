@@ -7,7 +7,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, useColorScheme } from 'react-native';
 
+import { preloadSounds } from '../lib/feedback';
 import { ACTION_CANCEL, rescheduleAll, setupNotifications } from '../lib/notifications';
+import { initPurchases } from '../lib/purchases';
 import { fetchRates } from '../lib/rates';
 import { useStore } from '../store';
 import { usePalette } from '../theme';
@@ -32,6 +34,13 @@ export default function RootLayout() {
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
+
+  // Pro status comes from the store: renewals, refunds and cancellations land here.
+  useEffect(() => {
+    if (!hydrated) return;
+    initPurchases((isPro) => useStore.getState().setPro(isPro));
+    preloadSounds();
+  }, [hydrated]);
 
   // Fresh exchange rates, at most every few hours.
   useEffect(() => {

@@ -1,5 +1,6 @@
 import { Platform, Switch } from 'react-native';
 
+import { feedback } from '../lib/feedback';
 import { usePalette } from '../theme';
 
 interface Props {
@@ -16,7 +17,10 @@ export function Toggle({ value, onChange, label }: Props) {
   return (
     <Switch
       value={value}
-      onValueChange={onChange}
+      onValueChange={(v) => {
+        onChange(v);
+        feedback(v ? 'on' : 'off');
+      }}
       trackColor={{ true: p.cobalt, false: p.track }}
       thumbColor="#FFFFFF"
       ios_backgroundColor={p.track}
