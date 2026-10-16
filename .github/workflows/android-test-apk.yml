@@ -47,8 +47,17 @@ jobs:
         env:
           NODE_ENV: production
         run: |
+          set -o pipefail
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> gradle.properties
-          ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+          ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a 2>&1 | tee build.log
+
+      - name: Show why the build failed
+        if: failure()
+        run: |
+          [ -f android/build.log ] || exit 0
+          REASON=$(grep -E -A12 "What went wrong|error:|ERROR|Error:" android/build.log | grep -v "^\s*$" | head -60)
+          [ -n "$REASON" ] || REASON=$(tail -n 60 android/build.log)
+          echo "::error title=Gradle::$(echo "$REASON" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')"
 
       - name: Name the file
         run: |
