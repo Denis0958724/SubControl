@@ -42,3 +42,17 @@ yarn-error.*
 
 # web preview build
 dist-preview/
+
+# store credentials written by the CI build, never committed
+asc-api-key.p8
+google-service-account.json
+*.p8
+*.p12
+*.jks
+*.keystore
+!debug.keystore
+builds.json
+_site/
+
+# raw captures for the store screenshots
+store/raw/

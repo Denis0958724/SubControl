@@ -60,23 +60,40 @@ jobs:
           echo "::error title=Gradle::$(echo "$REASON" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')"
 
       - name: Name the file
-        run: |
-          VERSION=$(node -p "require('./app.json').expo.version")
-          cp android/app/build/outputs/apk/release/app-release.apk "SubControl-$VERSION-test-${{ github.run_number }}.apk"
-          echo "APK=SubControl-$VERSION-test-${{ github.run_number }}.apk" >> "$GITHUB_ENV"
+        run: cp android/app/build/outputs/apk/release/app-release.apk SubControl-test.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: SubControl-test-apk
-          path: ${{ env.APK }}
+          path: SubControl-test.apk
           retention-days: 30
 
-      - name: Publish as a release, so the phone can download the .apk directly
+      # One release with a permanent link:
+      # https://github.com/<owner>/<repo>/releases/download/android-test/SubControl-test.apk
+      - name: Put the APK on the download page
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "test-${{ github.run_number }}" "$APK" \
-            --prerelease \
-            --title "Тестова збірка ${{ github.run_number }}" \
-            --notes "Тестова збірка для Android. Pro вмикається безкоштовно. Відкрийте цю сторінку з телефона, завантажте .apk і встановіть." \
-            --target "${{ github.sha }}"
+          VERSION=$(node -p "require('./app.json').expo.version")
+          NOTES="Тестова збірка SubControl $VERSION для Android, номер ${{ github.run_number }}.
+
+          Як встановити:
+          1. Відкрийте цю сторінку з телефона.
+          2. Нижче, у розділі Assets, натисніть SubControl-test.apk.
+          3. Відкрийте завантажений файл. Android попросить дозволити встановлення з браузера. Це нормально для застосунків не з Google Play.
+
+          У тестовій збірці Pro вмикається безкоштовно. Посилання постійне, файл оновлюється з кожною збіркою."
+          # older numbered test releases are replaced by this one
+          for tag in $(gh release list --limit 100 --json tagName --jq '.[].tagName | select(startswith("test-"))'); do
+            gh release delete "$tag" --cleanup-tag --yes || true
+          done
+          if gh release view android-test >/dev/null 2>&1; then
+            gh release upload android-test SubControl-test.apk --clobber
+            gh release edit android-test --notes "$NOTES" --title "SubControl для Android (тестова збірка)" --latest
+          else
+            gh release create android-test SubControl-test.apk \
+              --title "SubControl для Android (тестова збірка)" \
+              --notes "$NOTES" \
+              --target "${{ github.sha }}" \
+              --latest
+          fi

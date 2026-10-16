@@ -10,6 +10,7 @@ import { Toggle } from '../components/Toggle';
 import { CYCLE_LABEL } from '../lib/dates';
 import { confirm, inform } from '../lib/confirm';
 import { formatNumber, monthlyUAH } from '../lib/money';
+import { SUPPORT_URL } from '../lib/links';
 import { openExternal } from '../lib/open';
 import { BILLING, manageSubscriptionUrl } from '../lib/purchases';
 import { fetchRates, RATE_SOURCE_LABEL } from '../lib/rates';
@@ -229,6 +230,11 @@ export default function SettingsScreen() {
           Підписки зберігаються тільки на цьому телефоні. SubControl не має доступу до ваших грошей і нічого не
           списує сам.
         </T>
+        <Pressable accessibilityRole="link" onPress={() => openExternal(SUPPORT_URL)} hitSlop={8}>
+          <T variant="caption" color={p.cobalt} center>
+            Допомога й підтримка
+          </T>
+        </Pressable>
         <Pressable accessibilityRole="link" onPress={() => router.push('/privacy')} hitSlop={8}>
           <T variant="caption" color={p.cobalt} center>
             Політика конфіденційності

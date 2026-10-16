@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Політика конфіденційності SubControl</title>
+<meta name="description" content="Які дані використовує SubControl і де вони зберігаються.">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600&family=Unbounded:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./"><img src="icon.png" alt="">SubControl</a>
+    <nav><a href="support.html">Підтримка</a><a href="privacy.html" aria-current="page">Конфіденційність</a></nav>
+  </header>
+
+  <main>
+    <h1>Політика конфіденційності</h1>
+    <p class="muted">Останнє оновлення: {{UPDATED}}</p>
+    <p class="lead">SubControl допомагає стежити за підписками. Даних ми збираємо якомога менше. Точніше, майже не збираємо: серверів, куди їх можна було б передати, у SubControl немає.</p>
+
+    <h2>Що зберігається на телефоні</h2>
+    <ul>
+      <li><strong>Список підписок і налаштування.</strong> Тільки на вашому пристрої.</li>
+      <li><strong>Токен monobank</strong>, якщо ви ввімкнули автопошук. Лежить у захищеному сховищі системи: Keychain на iPhone, Keystore на Android. З ним можна лише переглядати виписку, переказати гроші неможливо.</li>
+      <li><strong>Виписка monobank</strong> завантажується напряму з api.monobank.ua на пристрій і аналізується там само. Ми її не зберігаємо й нікуди не передаємо.</li>
+      <li><strong>Файли виписок</strong> інших банків відкриваються й читаються на пристрої. Після пошуку зберігаються лише підписки, які ви самі вирішили додати.</li>
+    </ul>
+
+    <h2>Куди застосунок звертається в інтернеті</h2>
+    <ul>
+      <li><strong>api.monobank.ua</strong>: курси валют і, за вашою згодою, виписка картки.</li>
+      <li><strong>bank.gov.ua</strong>: офіційний курс НБУ, якщо monobank недоступний.</li>
+      <li><strong>App Store або Google Play і сервіс RevenueCat</strong>: лише для оплати Pro і перевірки, чи вона активна. RevenueCat отримує випадковий ідентифікатор застосунку й історію покупок Pro. Імені, пошти чи номера картки там немає. Деталі: <a href="https://www.revenuecat.com/privacy">політика RevenueCat</a>.</li>
+      <li>Сторінки сервісів на кшталт Netflix відкриваються, тільки коли ви натискаєте кнопку скасування.</li>
+    </ul>
+
+    <h2>Чого ми не робимо</h2>
+    <ul>
+      <li>Не показуємо рекламу й не продаємо дані.</li>
+      <li>Не використовуємо аналітику чи трекери і не стежимо за вами в інших застосунках.</li>
+      <li>Не маємо доступу до ваших грошей і нічого не списуємо самі.</li>
+    </ul>
+
+    <h2>Оплата Pro</h2>
+    <p>Підписка Pro оформлюється через App Store або Google Play. Платіжні дані обробляють Apple чи Google, ми їх не бачимо. Скасувати Pro можна в налаштуваннях підписок App Store чи Google Play.</p>
+
+    <h2>Діти</h2>
+    <p>SubControl не призначений для дітей до 13 років і свідомо не збирає їхніх даних.</p>
+
+    <h2>Видалення даних</h2>
+    <p>Налаштування, «Видалити всі дані»: стирає список, налаштування і токен monobank з пристрою. Видалення застосунку теж стирає все. Підписку Pro це не скасовує.</p>
+
+    <h2>Зміни політики</h2>
+    <p>Якщо щось зміниться, ми оновимо цю сторінку і дату вгорі.</p>
+
+    <!--contact-->
+    <h2>Контакт</h2>
+    <p>Питання щодо конфіденційності: <a href="mailto:{{EMAIL}}">{{EMAIL}}</a></p>
+    <!--/contact-->
+  </main>
+
+  <footer>
+    <a href="./">Головна</a><a href="support.html">Підтримка</a>
+    <div style="margin-top:8px">© {{YEAR}} SubControl</div>
+  </footer>
+</div>
+</body>
+</html>

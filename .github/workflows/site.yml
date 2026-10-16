@@ -1,0 +1,40 @@
+# Publishes the privacy policy, support page and home page to GitHub Pages (gh-pages branch).
+# Address: https://<owner>.github.io/<repo>/
+name: Сайт (політика й підтримка)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - scripts/build-site.mjs
+      - src/lib/links.ts
+      - assets/icon.png
+
+permissions:
+  contents: write
+
+concurrency:
+  group: site
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build
+        run: node scripts/build-site.mjs
+      - name: Publish to gh-pages
+        working-directory: _site
+        run: |
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Сайт з ${GITHUB_SHA::7}"
+          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" gh-pages

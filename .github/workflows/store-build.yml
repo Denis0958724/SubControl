@@ -1,0 +1,118 @@
+# Builds for App Store and Google Play through EAS (Expo's build servers).
+# Run it from the Actions tab: "Збірка для App Store і Google Play", Run workflow.
+# What to set up before the first run is in PUBLISHING.md.
+name: Збірка для App Store і Google Play
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Для якого магазину
+        type: choice
+        options: [all, android, ios]
+        default: all
+      submit:
+        description: Одразу відправити в App Store Connect / Google Play (якщо налаштовано)
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: store-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # EAS free plan queues builds; waiting costs nothing on a public repository
+    timeout-minutes: 340
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      PLATFORM: ${{ inputs.platform }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Checks
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Secrets
+        env:
+          REVENUECAT_IOS_KEY: ${{ secrets.REVENUECAT_IOS_KEY }}
+          REVENUECAT_ANDROID_KEY: ${{ secrets.REVENUECAT_ANDROID_KEY }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: node scripts/prepare-store-build.mjs
+
+      - name: Link the Expo project (first run only)
+        run: |
+          if node -e "process.exit(require('./app.json').expo.extra?.eas?.projectId ? 0 : 1)"; then
+            echo "Project already linked"
+          else
+            npx --yes eas-cli@^25 init --non-interactive --force
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add app.json
+            git commit -m "Привʼязати проєкт Expo"
+            git push
+          fi
+
+      - name: Build
+        run: |
+          npx --yes eas-cli@^25 build --platform "$PLATFORM" --profile production --non-interactive --wait --json > builds.json
+          node -e "for (const b of require('./builds.json')) console.log(b.platform, b.appVersion, b.appBuildVersion, b.status, b.artifacts?.buildUrl ?? '')"
+
+      - name: Explain a failed iPhone build
+        if: failure() && inputs.platform != 'android'
+        run: |
+          echo "::warning title=Перша збірка для iPhone::Якщо помилка про credentials, сертифікат чи provisioning profile: один раз запустіть з компʼютера npx eas-cli build -p ios --profile production і увійдіть в Apple ID. EAS збереже сертифікати, далі ця кнопка працюватиме сама. Деталі в PUBLISHING.md."
+
+      - name: Send to App Store Connect (TestFlight)
+        if: inputs.submit && env.CAN_SUBMIT_IOS == '1' && inputs.platform != 'android'
+        run: npx --yes eas-cli@^25 submit --platform ios --profile production --latest --non-interactive
+
+      - name: Send to Google Play (internal testing)
+        if: inputs.submit && env.CAN_SUBMIT_ANDROID == '1' && inputs.platform != 'ios'
+        # Google accepts API uploads only after the first version was uploaded by hand
+        continue-on-error: true
+        run: npx --yes eas-cli@^25 submit --platform android --profile production --latest --non-interactive
+
+      - name: Put the Google Play file (.aab) on the download page
+        if: inputs.platform != 'ios'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          URL=$(node -e "const b=require('./builds.json').find(x=>x.platform==='ANDROID'); console.log(b?.artifacts?.buildUrl ?? '')")
+          [ -n "$URL" ] || { echo "No Android build"; exit 0; }
+          VERSION=$(node -e "const b=require('./builds.json').find(x=>x.platform==='ANDROID'); console.log(b.appVersion + ' (' + b.appBuildVersion + ')')")
+          curl -sSL "$URL" -o SubControl-google-play.aab
+          NOTES="Файл для Google Play Console, версія $VERSION.
+
+          Перший раз завантажте його вручну: Play Console, ваш застосунок, Testing, Internal testing, Create new release, Upload. Далі нові версії може відправляти сама кнопка, якщо додано секрет GOOGLE_SERVICE_ACCOUNT_JSON.
+
+          На телефон цей файл не ставиться. Для телефона є SubControl-test.apk у релізі «SubControl для Android (тестова збірка)»."
+          if gh release view store-android >/dev/null 2>&1; then
+            gh release upload store-android SubControl-google-play.aab --clobber
+            gh release edit store-android --notes "$NOTES" --latest=false
+          else
+            gh release create store-android SubControl-google-play.aab \
+              --title "Google Play: файл для завантаження (.aab)" \
+              --notes "$NOTES" \
+              --target "${{ github.sha }}" \
+              --latest=false
+          fi

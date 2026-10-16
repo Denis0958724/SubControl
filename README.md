@@ -2,6 +2,14 @@
 
 Застосунок, який не дає платити за забуті підписки. Показує всі підписки в гривнях, нагадує за день до списання і підказує, як скасувати.
 
+## Завантажити
+
+- **Android, тестова збірка:** [SubControl-test.apk](https://github.com/Denis0958724/SubControl/releases/download/android-test/SubControl-test.apk). Відкрийте з телефона й встановіть. Pro у ній безкоштовний.
+- **Усі файли:** [сторінка релізів](https://github.com/Denis0958724/SubControl/releases): тестовий APK і файл .aab для Google Play.
+- **Скріншоти й графіка для магазинів:** папка [`store/`](store).
+- **Як опублікувати в App Store і Google Play:** [`PUBLISHING.md`](PUBLISHING.md), покроково. Тексти для анкет: [`STORE.md`](STORE.md).
+- **Сайт з політикою й підтримкою:** https://denis0958724.github.io/SubControl/
+
 ## Що вміє
 
 **Безкоштовно**
@@ -48,7 +56,7 @@ PDF не підходить: з нього таблицю не дістати. �
 
 ## Поставити на телефон
 
-**Android, без компʼютера.** На GitHub: вкладка Actions, «Тестовий APK для Android», кнопка Run workflow. Хвилин за 40 у розділі Releases зʼявиться «Тестова збірка N» з файлом `.apk`. Відкрийте цю сторінку з телефона (увійшовши в GitHub), завантажте файл і встановіть. Android попросить дозволити встановлення з браузера, це нормально для збірок не з Google Play. У тестовій збірці Pro вмикається безкоштовно.
+**Android.** Посилання вгорі, у розділі «Завантажити». Нова збірка: вкладка Actions, «Тестовий APK для Android», Run workflow. Хвилин за 40 файл за тим самим посиланням оновиться.
 
 **iPhone.** Apple не дає ставити застосунки повз App Store, тож варіантів два:
 
@@ -72,33 +80,11 @@ npm run preview:web # одна сторінка для браузера, dist-pr
 
 ## Публікація в App Store і Google Play
 
-Збірка і відправка йдуть у хмарі через EAS. Mac і Android Studio не потрібні.
+Покроково в [`PUBLISHING.md`](PUBLISHING.md). Коротко:
 
-1. **Акаунти розробника**: Apple Developer Program (99 $ на рік) і Google Play Console (одноразово 25 $).
-2. **Оплата Pro.** Код уже готовий (`src/lib/purchases.ts`, RevenueCat). Лишилося створити товари:
-   - App Store Connect і Google Play Console: дві автоподовжувані підписки в одній групі.
-     - `subcontrol_pro_monthly`: 79 ₴ на місяць. Вступна пропозиція (introductory offer, pay as you go): 75 ₴ на місяць, 3 періоди. У Google Play це offer з фазою «discounted recurring payment» на 3 місяці.
-     - `subcontrol_pro_yearly`: 690 ₴ на рік.
-     - Apple має фіксовану сітку цін для кожної країни. Якщо 75, 79 чи 690 ₴ там немає, оберіть найближчу. Застосунок показує ціни, які віддає магазин, тож код правити не треба.
-   - [RevenueCat](https://www.revenuecat.com): проєкт, обидва магазини, entitlement `pro` з обома товарами, offering `default` з пакетами Monthly і Annual.
-   - Ключі RevenueCat (публічні, `appl_…` і `goog_…`) додайте в EAS:
-     ```bash
-     npx eas-cli@latest env:create --name EXPO_PUBLIC_REVENUECAT_IOS_KEY --value appl_xxx --environment production
-     npx eas-cli@latest env:create --name EXPO_PUBLIC_REVENUECAT_ANDROID_KEY --value goog_xxx --environment production
-     ```
-   - Без ключів робоча збірка нічого не продає і нічого не дарує. Безкоштовний Pro буває лише в тестових збірках (`EXPO_PUBLIC_TEST_PRO=1`, профіль `preview`).
-3. **Політика конфіденційності**: текст у [`PRIVACY.md`](PRIVACY.md), у застосунку він теж є (Налаштування, внизу). Опублікуйте його за постійним посиланням для сторінки в магазині. Впишіть пошту для звʼязку в `PRIVACY.md` і `src/lib/links.ts` (`CONTACT_EMAIL`).
-   - App Store, «App Privacy»: збираються лише Purchases (історія покупок), не повʼязані з особою, для роботи застосунку. Трекінгу немає.
-   - Google Play, «Data safety»: те саме, Purchase history, шифрування при передачі, можна видалити.
-4. **Збірка і відправка**:
-   ```bash
-   npx eas-cli@latest login
-   npx eas-cli@latest build --platform all --profile production
-   npx eas-cli@latest submit --platform ios
-   npx eas-cli@latest submit --platform android
-   ```
-5. **Сторінка в магазині**: назва, описи й ключові слова в [`STORE.md`](STORE.md).
-6. **Google Play для нового особистого акаунта** вимагає закрите тестування перед відкритим релізом. Актуальні умови дивіться в Play Console.
+- Збірки для магазинів робить кнопка в Actions «Збірка для App Store і Google Play» через EAS. Секрети й акаунти описані в інструкції.
+- Оплата Pro через RevenueCat: 79 ₴ на місяць з акцією 75 ₴ на перші 3 місяці і 690 ₴ на рік. Без ключів RevenueCat збірка для магазинів не запуститься, а тестова вмикає Pro безкоштовно (`EXPO_PUBLIC_TEST_PRO=1`).
+- Тексти й відповіді для анкет у [`STORE.md`](STORE.md), картинки в [`store/`](store), сайт у [`site/`](site).
 
 ## Будова проєкту
 

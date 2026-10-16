@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Підтримка SubControl</title>
+<meta name="description" content="Відповіді на часті питання про SubControl і контакт для звʼязку.">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600&family=Unbounded:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./"><img src="icon.png" alt="">SubControl</a>
+    <nav><a href="support.html" aria-current="page">Підтримка</a><a href="privacy.html">Конфіденційність</a></nav>
+  </header>
+
+  <main>
+    <h1>Підтримка</h1>
+    <p class="lead">Короткі відповіді на те, про що питають найчастіше.</p>
+
+    <!--contact-->
+    <div class="card">
+      <h3>Написати нам</h3>
+      <p>Пошта: <a href="mailto:{{EMAIL}}">{{EMAIL}}</a>. Відповідаємо українською, зазвичай протягом дня-двох.</p>
+    </div>
+    <!--/contact-->
+
+    <h2>SubControl Pro</h2>
+    <details><summary>Як скасувати Pro</summary>
+      <p>Pro продовжується автоматично, поки ви його не скасуєте. Скасувати можна будь-коли, щонайменше за добу до кінця оплаченого періоду:</p>
+      <ul>
+        <li>iPhone: Параметри, ваше імʼя, Підписки, SubControl, Скасувати підписку.</li>
+        <li>Android: Google Play, фото профілю, Платежі й підписки, Підписки, SubControl, Скасувати.</li>
+      </ul>
+      <p>Видалення застосунку підписку не скасовує.</p>
+    </details>
+    <details><summary>Я оплатив, а Pro не працює</summary>
+      <p>Відкрийте SubControl Pro і натисніть «Відновити покупки». Застосунок перевірить оплату в App Store чи Google Play. Важливо бути в тому ж акаунті Apple чи Google, з якого купували.</p>
+    </details>
+    <details><summary>Як повернути гроші</summary>
+      <p>Платежі обробляють Apple і Google, тож повернення оформлюється в них: reportaproblem.apple.com для iPhone, Google Play, Платежі й підписки, для Android.</p>
+    </details>
+
+    <h2>Нагадування</h2>
+    <details><summary>Нагадування не приходять</summary>
+      <ol>
+        <li>Перевірте, що сповіщення для SubControl увімкнені в налаштуваннях телефона.</li>
+        <li>На Android вимкніть для SubControl економію заряду: деякі телефони приглушують сповіщення застосунків, які давно не відкривали.</li>
+        <li>У картці підписки має бути увімкнено «Нагадувати».</li>
+      </ol>
+    </details>
+    <details><summary>Чи може SubControl сам скасувати підписку</summary>
+      <p>Ні. Netflix, Apple, Spotify та інші не дають стороннім застосункам скасовувати підписки. SubControl показує покрокову інструкцію і відкриває потрібну сторінку. Решта займає хвилину.</p>
+    </details>
+
+    <h2>Автопошук у виписці</h2>
+    <details><summary>Який файл підходить</summary>
+      <p>Виписка в Excel (.xlsx, .xls) або CSV за 2-3 місяці. PDF не підходить, з нього не дістати таблицю.</p>
+      <p>ПриватБанк: Приват24, картка, виписка, формат Excel. monobank: можна без файлу, через токен з api.monobank.ua.</p>
+    </details>
+    <details><summary>Чи безпечно давати токен monobank</summary>
+      <p>Токен дає лише переглядати виписку. Переказати гроші з ним неможливо. Він зберігається в захищеному сховищі телефона і нікуди не надсилається, крім самого monobank.</p>
+    </details>
+
+    <h2>Дані</h2>
+    <details><summary>Як видалити всі дані</summary>
+      <p>Налаштування, «Видалити всі дані». Або просто видаліть застосунок. На серверах нічого не лишається, бо ми нічого туди й не відправляємо.</p>
+    </details>
+    <details><summary>Чи можна перенести підписки на новий телефон</summary>
+      <p>Поки що через експорт у таблицю (Pro). Синхронізації між телефонами немає, бо дані не покидають ваш пристрій.</p>
+    </details>
+  </main>
+
+  <footer>
+    <a href="./">Головна</a><a href="privacy.html">Конфіденційність</a>
+    <div style="margin-top:8px">© {{YEAR}} SubControl</div>
+  </footer>
+</div>
+</body>
+</html>
