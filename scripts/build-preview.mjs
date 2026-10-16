@@ -53,5 +53,13 @@ html = html.replace(/<script src="([^"]+)" defer><\/script>/g, (_, src) => {
 });
 
 writeFileSync(join(out, 'index.html'), html);
+
+// Same page without the document skeleton, for hosts that add their own <html>/<head>/<body>.
+const fragment = html
+  .replace(/<!doctype html>/i, '')
+  .replace(/<html[^>]*>|<\/html>|<head>|<\/head>|<body>|<\/body>/gi, '')
+  .replace(/<meta charset="utf-8" \/>|<meta httpEquiv[^>]*>|<meta name="viewport"[^>]*>/g, '')
+  .trim();
+writeFileSync(join(out, 'subcontrol-preview.html'), fragment);
 rmSync(tmp, { recursive: true, force: true });
 console.log(`Preview ready: ${join(out, 'index.html')} (${Math.round(html.length / 1024)} KB)`);

@@ -1,7 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
-import { Linking, Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
@@ -15,16 +14,10 @@ import {
 } from '../../lib/catalog';
 import { formatDate, relativeDay, todayISO } from '../../lib/dates';
 import { chargeUAH, formatUAH } from '../../lib/money';
+import { openExternal } from '../../lib/open';
 import { useStore } from '../../store';
 import { fonts, space, usePalette } from '../../theme';
 
-function openUrl(url: string) {
-  if (Platform.OS === 'web') {
-    globalThis.open?.(url, '_blank');
-    return;
-  }
-  WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url));
-}
 
 export default function CancelGuide() {
   const p = usePalette();
@@ -88,7 +81,7 @@ export default function CancelGuide() {
           </View>
         ))}
         {url && (
-          <Button title="Відкрити сторінку скасування" icon="external" onPress={() => openUrl(url)} kind="secondary" />
+          <Button title="Відкрити сторінку скасування" icon="external" onPress={() => openExternal(url)} kind="secondary" />
         )}
       </Group>
 
@@ -97,7 +90,7 @@ export default function CancelGuide() {
         {stores.map((s, i) => (
           <View key={s.url}>
             {i > 0 && <Divider inset={space(12)} />}
-            <Line icon="external" title={s.title} onPress={() => openUrl(s.url)} />
+            <Line icon="external" title={s.title} onPress={() => openExternal(s.url)} />
           </View>
         ))}
       </Group>

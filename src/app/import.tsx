@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useRef, useState } from 'react';
-import { Linking, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, tap } from '../components/Button';
 import { Icon } from '../components/Icon';
@@ -14,6 +13,7 @@ import { demoStatement } from '../lib/demo';
 import { detectSubscriptions, type Candidate, type StatementItem } from '../lib/detect';
 import { formatMoney, formatUAH, toUAH } from '../lib/money';
 import { MonobankError, TOKEN_URL, scanStatement } from '../lib/monobank';
+import { openExternal } from '../lib/open';
 import { loadToken, saveToken } from '../lib/secure';
 import { useStore } from '../store';
 import { fonts, noWebOutline, radius, space, usePalette } from '../theme';
@@ -262,11 +262,7 @@ export default function Import() {
             icon="external"
             kind="secondary"
             compact
-            onPress={() =>
-              Platform.OS === 'web'
-                ? globalThis.open?.(TOKEN_URL, '_blank')
-                : WebBrowser.openBrowserAsync(TOKEN_URL).catch(() => Linking.openURL(TOKEN_URL))
-            }
+            onPress={() => openExternal(TOKEN_URL)}
             style={styles.stepButton}
           />
         </Step>
