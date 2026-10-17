@@ -1,15 +1,18 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import Constants from 'expo-constants';
-import { Platform, Pressable, Share, StyleSheet, View } from 'react-native';
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { Divider, Group, Header, Line, ProBadge, Screen, SectionTitle } from '../components/Layout';
 import { Segmented } from '../components/Segmented';
 import { T } from '../components/T';
 import { Toggle } from '../components/Toggle';
-import { CYCLE_LABEL } from '../lib/dates';
+import { todayISO } from '../lib/dates';
+import { buildSubscriptionsXlsx, XLSX_MIME } from '../lib/exportTable';
 import { confirm, inform } from '../lib/confirm';
-import { formatNumber, monthlyUAH } from '../lib/money';
+import { formatNumber } from '../lib/money';
 import { SUPPORT_URL } from '../lib/links';
 import {
   askExactAlarms,
@@ -77,35 +80,29 @@ export default function SettingsScreen() {
     }
   };
 
-  const exportCsv = async () => {
+  const exportTable = async () => {
     if (!isPro) {
       router.push('/pro');
       return;
     }
-    const rows = [
-      'Назва;Ціна;Валюта;Як часто;Наступне списання;На місяць, грн;Статус',
-      ...subs.map((s) =>
-        [
-          s.name,
-          String(s.amount).replace('.', ','),
-          s.currency,
-          CYCLE_LABEL[s.cycle],
-          s.nextCharge,
-          Math.round(monthlyUAH(s, rates)),
-          s.status === 'active' ? 'активна' : 'скасована',
-        ].join(';'),
-      ),
-    ];
-    const csv = rows.join('\n');
+    const name = `SubControl ${todayISO()}.xlsx`;
+    const bytes = buildSubscriptionsXlsx(subs, rates, todayISO());
     if (Platform.OS === 'web') {
-      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'subcontrol.csv';
+      a.href = URL.createObjectURL(new Blob([bytes as BlobPart], { type: XLSX_MIME }));
+      a.download = name;
       a.click();
       return;
     }
-    await Share.share({ message: csv, title: 'SubControl.csv' });
+    try {
+      const file = new File(Paths.cache, name);
+      if (file.exists) file.delete();
+      file.create();
+      file.write(bytes);
+      await Sharing.shareAsync(file.uri, { mimeType: XLSX_MIME, UTI: 'org.openxmlformats.spreadsheetml.sheet', dialogTitle: 'Таблиця підписок' });
+    } catch {
+      inform('Не вийшло', 'Не вдалося створити таблицю. Спробуйте ще раз.');
+    }
   };
 
   const rateTime = new Date(rates.updatedAt);
@@ -299,9 +296,10 @@ export default function SettingsScreen() {
       <Group>
         <Line
           icon="download"
-          title="Експорт у таблицю (CSV)"
+          title="Таблиця для Excel"
+          hint="Excel, Google Таблиці, Numbers"
           right={!isPro ? <ProBadge /> : undefined}
-          onPress={exportCsv}
+          onPress={exportTable}
         />
         <Divider inset={space(12)} />
         <Line
