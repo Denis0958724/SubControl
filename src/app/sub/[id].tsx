@@ -43,7 +43,9 @@ export default function SubscriptionScreen() {
   const decide = !cancelled && decideDays >= 0 && decideDays <= 1;
   const answered = acknowledged[sub.id] === sub.nextCharge;
   const lead = settings.leadDays;
-  const remindHint = `за ${lead === 1 ? 'день' : `${lead} ${plural(lead, ['день', 'дні', 'днів'])}`} о ${settings.hour}:00`;
+  const remindHint =
+    `за ${lead === 1 ? 'день' : `${lead} ${plural(lead, ['день', 'дні', 'днів'])}`} о ${settings.hour}:00` +
+    (settings.dayOf ? ' і в день списання' : '');
 
   const onDelete = async () => {
     const ok = await confirm('Видалити зі списку?', `${sub.name} зникне з SubControl. Сама підписка в сервісі не скасується.`, 'Видалити', true);
