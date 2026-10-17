@@ -44,4 +44,6 @@ export interface Settings {
   dayOf: boolean;
   /** Android: reminders ring through the alarm stream, even in silent mode */
   loud: boolean;
+  /** iPhone: a charge today or tomorrow stays on the lock screen and in the Dynamic Island */
+  liveActivity: boolean;
 }

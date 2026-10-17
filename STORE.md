@@ -21,7 +21,9 @@ Netflix, Spotify, YouTube, MEGOGO, iCloud, ChatGPT. Підписки набіг�
 
 • Сума на місяць і на рік у гривнях. Долари й євро перераховуються за курсом monobank або НБУ.
 • Циферблат місяця: одразу видно, скільки вже списано і що ще попереду.
-• Нагадування за день до списання. «Продовжую» чи «Скасувати» просто зі сповіщення.
+• Нагадування за день до списання і ще раз у день списання. «Продовжую» чи «Скасувати» просто зі сповіщення.
+• Нагадування, яке неможливо пропустити: власний звук, іконка, на Android звучить навіть на беззвучному.
+• На iPhone списання сьогодні чи завтра видно в Dynamic Island і на екрані блокування, а віджет показує наступне списання.
 • Покрокові інструкції, як скасувати кожну підписку, і посилання на потрібну сторінку.
 • Українські й світові сервіси, а також будь-який свій.
 
@@ -82,6 +84,8 @@ To try the statement search: Settings → "Знайти підписки у ви
 https://github.com/Denis0958724/SubControl/raw/main/src/lib/statement/__tests__/fixtures/privat.xlsx
 
 The monobank option asks for the user's personal read-only API token from api.monobank.ua. It is optional; the file option works without it.
+
+Reminders use the Time Sensitive interruption level: they warn about money leaving the account today or tomorrow. A Live Activity shows a charge due today or tomorrow while the person decides to keep or cancel it; it starts only when the app is open and ends after the answer or the charge date. The "Наступне списання" widget shows the next charge.
 
 The app does not move money and cannot cancel subscriptions by itself. It shows steps and opens the service's own cancellation page.
 ```

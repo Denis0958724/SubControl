@@ -5,7 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { colorForName, findService } from './lib/catalog';
 import { fromISO, rollForward, todayISO } from './lib/dates';
 import { FALLBACK_RATES } from './lib/money';
-import type { Rates, Settings, Subscription } from './lib/types';
+import type { ISODate, Rates, Settings, Subscription } from './lib/types';
 
 /** How many active subscriptions the free version tracks. */
 export const FREE_LIMIT = 7;
@@ -21,6 +21,8 @@ interface State {
   rates: Rates;
   isPro: boolean;
   monoConnected: boolean;
+  /** charges the person already answered "Продовжую" to: subscription id → that charge date */
+  acknowledged: Record<string, ISODate>;
   hydrated: boolean;
 
   add: (sub: NewSubscription) => string;
@@ -32,11 +34,12 @@ interface State {
   setRates: (rates: Rates) => void;
   setPro: (isPro: boolean) => void;
   setMonoConnected: (connected: boolean) => void;
+  acknowledge: (id: string) => void;
   resetAll: () => void;
   rollDates: () => void;
 }
 
-const DEFAULT_SETTINGS: Settings = { leadDays: 1, hour: 12, sounds: true, dayOf: true, loud: true };
+const DEFAULT_SETTINGS: Settings = { leadDays: 1, hour: 12, sounds: true, dayOf: true, loud: true, liveActivity: true };
 
 const newId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
@@ -48,6 +51,7 @@ export const useStore = create<State>()(
       rates: FALLBACK_RATES,
       isPro: false,
       monoConnected: false,
+      acknowledged: {},
       hydrated: false,
 
       add: (sub) => {
@@ -106,6 +110,11 @@ export const useStore = create<State>()(
       setPro: (isPro) => set({ isPro }),
       setMonoConnected: (monoConnected) => set({ monoConnected }),
 
+      acknowledge: (id) => {
+        const sub = get().subs.find((s) => s.id === id);
+        if (sub) set({ acknowledged: { ...get().acknowledged, [id]: sub.nextCharge } });
+      },
+
       resetAll: () => set({ subs: [], settings: DEFAULT_SETTINGS }),
 
       /** Charges that already happened move to their next date. */
@@ -129,7 +138,8 @@ export const useStore = create<State>()(
         const saved = (persisted ?? {}) as Partial<State>;
         return { ...current, ...saved, settings: { ...DEFAULT_SETTINGS, ...saved.settings } };
       },
-      partialize: ({ subs, settings, rates, isPro, monoConnected }) => ({
+      partialize: ({ subs, settings, rates, isPro, monoConnected, acknowledged }) => ({
+        acknowledged,
         subs,
         settings,
         rates,

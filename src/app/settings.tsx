@@ -204,11 +204,26 @@ export default function SettingsScreen() {
             right={<Toggle value={settings.loud} onChange={(loud) => setSettings({ loud })} label="Чути навіть на беззвучному" />}
           />
         ) : (
-          <Line
-            icon="sound"
-            title="На беззвучному буде вібрація"
-            hint="Звук з вимкненим перемикачем Apple дозволяє лише медичним застосункам. Зате нагадування пробʼється крізь режим фокусування"
-          />
+          <>
+            <Line
+              icon="star"
+              title="Dynamic Island і екран блокування"
+              hint="Списання сьогодні чи завтра висить там, поки не вирішите"
+              right={
+                <Toggle
+                  value={settings.liveActivity}
+                  onChange={(liveActivity) => setSettings({ liveActivity })}
+                  label="Dynamic Island і екран блокування"
+                />
+              }
+            />
+            <Divider inset={space(12)} />
+            <Line
+              icon="sound"
+              title="На беззвучному буде вібрація"
+              hint="Звук з вимкненим перемикачем Apple дозволяє лише медичним застосункам. Зате нагадування пробʼється крізь режим фокусування"
+            />
+          </>
         )}
         {Platform.OS === 'android' && !status.exact && (
           <>

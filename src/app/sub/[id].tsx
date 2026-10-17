@@ -7,7 +7,7 @@ import { Monogram } from '../../components/Monogram';
 import { T } from '../../components/T';
 import { Toggle } from '../../components/Toggle';
 import { feedback } from '../../lib/feedback';
-import { CYCLE_LABEL, formatDate, plural, relativeDay, todayISO } from '../../lib/dates';
+import { CYCLE_LABEL, diffDays, formatDate, plural, relativeDay, todayISO } from '../../lib/dates';
 import { confirm } from '../../lib/confirm';
 import { chargeUAH, formatMoney, formatUAH, monthlyUAH, yearlyUAH } from '../../lib/money';
 import { ensurePermission } from '../../lib/notifications';
@@ -24,6 +24,8 @@ export default function SubscriptionScreen() {
   const update = useStore((s) => s.update);
   const remove = useStore((s) => s.remove);
   const restore = useStore((s) => s.restore);
+  const acknowledge = useStore((s) => s.acknowledge);
+  const acknowledged = useStore((s) => s.acknowledged);
   const today = todayISO();
 
   if (!sub) {
@@ -37,6 +39,9 @@ export default function SubscriptionScreen() {
   }
 
   const cancelled = sub.status === 'cancelled';
+  const decideDays = diffDays(today, sub.nextCharge);
+  const decide = !cancelled && decideDays >= 0 && decideDays <= 1;
+  const answered = acknowledged[sub.id] === sub.nextCharge;
   const lead = settings.leadDays;
   const remindHint = `за ${lead === 1 ? 'день' : `${lead} ${plural(lead, ['день', 'дні', 'днів'])}`} о ${settings.hour}:00`;
 
@@ -80,6 +85,42 @@ export default function SubscriptionScreen() {
               : CYCLE_LABEL[sub.cycle]}
         </T>
       </View>
+
+      {decide && (
+        <View style={[styles.decide, { backgroundColor: answered ? p.greenSoft : p.amberSoft }]}>
+          <T variant="heading">
+            {decideDays === 0 ? 'Сьогодні' : 'Завтра'} {sub.name} спише {formatUAH(chargeUAH(sub, rates))}
+          </T>
+          {answered ? (
+            <T variant="caption" color={p.inkSoft}>
+              Ви вирішили продовжити. Наступне нагадування буде перед наступним списанням.
+            </T>
+          ) : (
+            <>
+              <T variant="caption" color={p.inkSoft}>
+                Ще користуєтесь? Якщо ні, скасуйте зараз, поки гроші на місці.
+              </T>
+              <View style={styles.decideRow}>
+                <Button
+                  title="Продовжую"
+                  kind="secondary"
+                  compact
+                  sound="success"
+                  style={styles.flex}
+                  onPress={() => acknowledge(sub.id)}
+                />
+                <Button
+                  title="Скасувати"
+                  kind="danger"
+                  compact
+                  style={styles.flex}
+                  onPress={() => router.push(`/cancel/${sub.id}`)}
+                />
+              </View>
+            </>
+          )}
+        </View>
+      )}
 
       {!cancelled && (
         <Group>
@@ -156,4 +197,7 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', gap: space(1), paddingVertical: space(4) },
   amount: { marginTop: space(3) },
   actions: { gap: space(2), marginTop: space(2) },
+  flex: { flex: 1 },
+  decide: { borderRadius: 16, padding: space(4), gap: space(2), marginBottom: space(3) },
+  decideRow: { flexDirection: 'row', gap: space(2), marginTop: space(1) },
 });

@@ -3,7 +3,7 @@ import { Linking, Platform } from 'react-native';
 
 import { addDays, fromISO, plural } from './dates';
 import { chargeUAH, formatUAH } from './money';
-import type { Rates, Settings, Subscription } from './types';
+import type { ISODate, Rates, Settings, Subscription } from './types';
 
 /**
  * Reminders that are hard to miss.
@@ -164,13 +164,19 @@ function content(sub: Subscription, daysBefore: number, rates: Rates, badge: num
 const channelFor = (settings: Settings) => (settings.loud ? CHANNEL_LOUD : CHANNEL);
 
 /** Re-creates every reminder from scratch. Cheap enough to run after any change. */
-export async function rescheduleAll(subs: Subscription[], settings: Settings, rates: Rates): Promise<void> {
+export async function rescheduleAll(
+  subs: Subscription[],
+  settings: Settings,
+  rates: Rates,
+  acknowledged: Record<string, ISODate> = {},
+): Promise<void> {
   if (!supported) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
   const now = Date.now();
   const offsets = settings.dayOf ? [settings.leadDays, 0] : [settings.leadDays];
   const due = subs
-    .filter((s) => s.status === 'active' && s.remind)
+    // "Продовжую" already answered this charge: no more reminders until the next one
+    .filter((s) => s.status === 'active' && s.remind && acknowledged[s.id] !== s.nextCharge)
     .flatMap((s) =>
       offsets.map((daysBefore) => {
         const at = fromISO(addDays(s.nextCharge, -daysBefore));

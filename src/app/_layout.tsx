@@ -8,7 +8,8 @@ import { useEffect } from 'react';
 import { AppState, Platform, useColorScheme } from 'react-native';
 
 import { preloadSounds } from '../lib/feedback';
-import { ACTION_CANCEL, clearBadge, rescheduleAll, setupNotifications } from '../lib/notifications';
+import { syncGlance } from '../lib/glance';
+import { ACTION_CANCEL, ACTION_KEEP, clearBadge, rescheduleAll, setupNotifications } from '../lib/notifications';
 import { initPurchases } from '../lib/purchases';
 import { fetchRates } from '../lib/rates';
 import { useStore } from '../store';
@@ -57,17 +58,27 @@ export default function RootLayout() {
     const sync = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        const { subs, settings, rates } = useStore.getState();
-        rescheduleAll(subs, settings, rates).catch(() => {});
+        const { subs, settings, rates, acknowledged } = useStore.getState();
+        rescheduleAll(subs, settings, rates, acknowledged).catch(() => {});
+        syncGlance(subs, rates, settings, acknowledged);
       }, 400);
     };
     setupNotifications().then(sync).catch(() => {});
     const unsub = useStore.subscribe((state, prev) => {
-      if (state.subs !== prev.subs || state.settings !== prev.settings || state.rates !== prev.rates) sync();
+      if (
+        state.subs !== prev.subs ||
+        state.settings !== prev.settings ||
+        state.rates !== prev.rates ||
+        state.acknowledged !== prev.acknowledged
+      )
+        sync();
     });
+    // a new day may bring a charge into "tomorrow": refresh the Live Activity and the widget
+    const appState = AppState.addEventListener('change', (st) => st === 'active' && sync());
     return () => {
       clearTimeout(timer);
       unsub();
+      appState.remove();
     };
   }, [hydrated]);
 
@@ -86,7 +97,8 @@ export default function RootLayout() {
       const subId = response?.notification.request.content.data?.subId;
       if (typeof subId !== 'string') return;
       if (!useStore.getState().subs.some((s) => s.id === subId)) return;
-      if (response!.actionIdentifier === ACTION_CANCEL) router.push(`/cancel/${subId}`);
+      if (response!.actionIdentifier === ACTION_KEEP) useStore.getState().acknowledge(subId);
+      else if (response!.actionIdentifier === ACTION_CANCEL) router.push(`/cancel/${subId}`);
       else if (response!.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) router.push(`/sub/${subId}`);
     };
     Notifications.getLastNotificationResponseAsync()

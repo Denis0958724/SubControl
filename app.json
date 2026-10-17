@@ -121,7 +121,8 @@
           "defaultChannel": "charges",
           "sounds": [
             "./assets/sounds/reminder.wav"
-          ]
+          ],
+          "mode": "production"
         }
       ],
       [
@@ -133,6 +134,26 @@
           "dark": {
             "backgroundColor": "#10132A"
           }
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "widgets": [
+            {
+              "name": "NextCharge",
+              "displayName": "Наступне списання",
+              "description": "Яка підписка спише гроші наступною і скільки",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "accessoryRectangular",
+                  "accessoryInline"
+                ]
+              },
+              "android": null
+            }
+          ]
         }
       ]
     ],

@@ -83,7 +83,7 @@ export const CONTACT_EMAIL = 'ваша@пошта';
    npx eas-cli@latest login
    npx eas-cli@latest credentials -p ios
    ```
-   Оберіть профіль `production` і пункт, що налаштовує всі credentials для збірки. Увійдіть в Apple ID, коли спитає, і погоджуйтесь на все, що EAS пропонує створити. Далі компʼютер не потрібен.
+   Оберіть профіль `production` і пункт, що налаштовує всі credentials для збірки. Увійдіть в Apple ID, коли спитає, і погоджуйтесь на все, що EAS пропонує створити. Сертифікати знадобляться для двох частин: самого застосунку (`ua.subcontrol.app`) і віджета з Dynamic Island (`ua.subcontrol.app.ExpoWidgetsTarget`). Спільну App Group `group.ua.subcontrol.app` і дозвіл на Time Sensitive сповіщення EAS увімкне сам. Далі компʼютер не потрібен.
 3. **Створіть застосунок.** App Store Connect → Apps → «+» → New App: iOS, назва SubControl, мова Ukrainian, bundle ID `ua.subcontrol.app`, SKU `subcontrol`.
 4. **Ключ API.** Додайте секрети `ASC_API_KEY_P8`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_APP_ID`, `APPLE_TEAM_ID` (таблиця в кроці 3).
 5. **Підписки.** Monetization → Subscriptions, група `SubControl Pro`, два товари й акція, як у [`STORE.md`](STORE.md). Потім у RevenueCat, у застосунку App Store: завантажте In-App Purchase Key (App Store Connect → Users and Access → Integrations → In-App Purchase → «+»), Products → Import, і додайте товари в пакети Monthly і Annual та entitlement `pro`.
