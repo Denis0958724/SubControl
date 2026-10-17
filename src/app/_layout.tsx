@@ -5,10 +5,10 @@ import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Platform, useColorScheme } from 'react-native';
+import { AppState, Platform, useColorScheme } from 'react-native';
 
 import { preloadSounds } from '../lib/feedback';
-import { ACTION_CANCEL, rescheduleAll, setupNotifications } from '../lib/notifications';
+import { ACTION_CANCEL, clearBadge, rescheduleAll, setupNotifications } from '../lib/notifications';
 import { initPurchases } from '../lib/purchases';
 import { fetchRates } from '../lib/rates';
 import { useStore } from '../store';
@@ -70,6 +70,14 @@ export default function RootLayout() {
       unsub();
     };
   }, [hydrated]);
+
+  // The red badge on the app icon stays until SubControl is opened.
+  useEffect(() => {
+    if (!ready || Platform.OS === 'web') return;
+    clearBadge();
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && clearBadge());
+    return () => sub.remove();
+  }, [ready]);
 
   // "Скасувати" in a reminder opens the cancel guide; tapping the reminder opens the subscription.
   useEffect(() => {

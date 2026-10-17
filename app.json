@@ -59,6 +59,9 @@
             ]
           }
         ]
+      },
+      "entitlements": {
+        "com.apple.developer.usernotifications.time-sensitive": true
       }
     },
     "android": {
@@ -70,7 +73,8 @@
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.SCHEDULE_EXACT_ALARM"
       ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
@@ -112,8 +116,12 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
+          "largeIcon": "./assets/notification-large-icon.png",
           "color": "#2F4BFF",
-          "defaultChannel": "reminders"
+          "defaultChannel": "charges",
+          "sounds": [
+            "./assets/sounds/reminder.wav"
+          ]
         }
       ],
       [

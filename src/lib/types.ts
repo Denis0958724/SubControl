@@ -40,4 +40,8 @@ export interface Settings {
   hour: number;
   /** quiet interface sounds */
   sounds: boolean;
+  /** one more reminder on the day of the charge */
+  dayOf: boolean;
+  /** Android: reminders ring through the alarm stream, even in silent mode */
+  loud: boolean;
 }

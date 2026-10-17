@@ -10,6 +10,8 @@ import { SubRow } from '../components/SubRow';
 import { T } from '../components/T';
 import { todayISO } from '../lib/dates';
 import { formatUAH, monthlyUAH, yearlyUAH } from '../lib/money';
+import { ensurePermission, openNotificationSettings } from '../lib/notifications';
+import { useReminderStatus } from '../lib/useReminderStatus';
 import { activeSubs, canAddMore, useStore } from '../store';
 import { fonts, space, usePalette } from '../theme';
 
@@ -19,6 +21,7 @@ export default function Home() {
   const rates = useStore((s) => s.rates);
   const isPro = useStore((s) => s.isPro);
   const [showCancelled, setShowCancelled] = useState(false);
+  const reminders = useReminderStatus();
   const today = todayISO();
 
   const { active, cancelled, monthly, yearly, saved } = useMemo(() => {
@@ -62,6 +65,30 @@ export default function Home() {
         yearlyTotal={yearly}
         onPressSub={open}
       />
+
+      {!empty && reminders.permission !== 'granted' && active.some((x) => x.remind) && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={async () => {
+            tap();
+            if (reminders.permission === 'denied') openNotificationSettings();
+            else await ensurePermission();
+            reminders.refresh();
+          }}
+          style={({ pressed }) => [styles.alert, { backgroundColor: p.amberSoft, opacity: pressed ? 0.8 : 1 }]}
+        >
+          <Icon name="bell" size={22} color={p.amber} />
+          <View style={styles.flex}>
+            <T variant="heading" style={{ fontSize: 16 }}>
+              Нагадування не прийдуть
+            </T>
+            <T variant="caption" color={p.inkSoft}>
+              Сповіщення для SubControl вимкнені. Натисніть, щоб увімкнути.
+            </T>
+          </View>
+          <Icon name="chevronRight" size={18} color={p.muted} />
+        </Pressable>
+      )}
 
       {empty ? (
         <View style={styles.empty}>
@@ -144,6 +171,14 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
+  alert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(3),
+    borderRadius: 16,
+    padding: space(4),
+    marginTop: space(4),
+  },
   flex: { flex: 1 },
   top: {
     height: 60,

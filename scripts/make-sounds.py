@@ -74,4 +74,14 @@ write("found", mix(
     (0.12, tone(1568, 0.4, 0.12, harmonics=BELL)),
 ), 0.38)
 
+# The reminder itself: has to be heard across a room, but stay a chime, not a siren.
+# Two bright phrases (G5 C6 E6 G6, then again) with a short gap, about 1.8 s.
+phrase = [
+    (0.00, tone(783.99, 0.5, 0.16, harmonics=BELL)),
+    (0.11, tone(1046.5, 0.5, 0.16, harmonics=BELL)),
+    (0.22, tone(1318.5, 0.5, 0.18, harmonics=BELL)),
+    (0.33, tone(1568.0, 0.8, 0.28, harmonics=BELL)),
+]
+write("reminder", mix(*phrase, *[(off + 0.95, s) for off, s in phrase]), 0.85)
+
 print("ok:", ", ".join(sorted(p.name for p in OUT.glob("*.wav"))))

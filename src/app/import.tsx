@@ -14,6 +14,7 @@ import { detectSubscriptions, type Candidate, type StatementItem } from '../lib/
 import { formatMoney, formatUAH, toUAH } from '../lib/money';
 import { MonobankError, TOKEN_URL, scanStatement } from '../lib/monobank';
 import { feedback } from '../lib/feedback';
+import { ensurePermission } from '../lib/notifications';
 import { openExternal } from '../lib/open';
 import { pickStatements } from '../lib/pickStatement';
 import { loadToken, saveToken } from '../lib/secure';
@@ -156,6 +157,7 @@ export default function Import() {
       });
     }
     router.dismissTo('/');
+    ensurePermission().catch(() => false);
   };
 
   const toggle = (key: string) =>

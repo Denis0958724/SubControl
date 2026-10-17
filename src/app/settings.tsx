@@ -11,11 +11,18 @@ import { CYCLE_LABEL } from '../lib/dates';
 import { confirm, inform } from '../lib/confirm';
 import { formatNumber, monthlyUAH } from '../lib/money';
 import { SUPPORT_URL } from '../lib/links';
+import {
+  askExactAlarms,
+  ensurePermission,
+  openNotificationSettings,
+  sendTestReminder,
+} from '../lib/notifications';
 import { openExternal } from '../lib/open';
 import { BILLING, manageSubscriptionUrl } from '../lib/purchases';
 import { fetchRates, RATE_SOURCE_LABEL } from '../lib/rates';
 import { forgetToken } from '../lib/secure';
 import type { Settings } from '../lib/types';
+import { useReminderStatus } from '../lib/useReminderStatus';
 import { useStore } from '../store';
 import { space, usePalette } from '../theme';
 
@@ -31,6 +38,25 @@ export default function SettingsScreen() {
   const subs = useStore((s) => s.subs);
   const resetAll = useStore((s) => s.resetAll);
   const [refreshing, setRefreshing] = useState(false);
+  const status = useReminderStatus();
+
+  const enableNotifications = async () => {
+    if (status.permission === 'denied') openNotificationSettings();
+    else await ensurePermission();
+    status.refresh();
+  };
+
+  const testReminder = async () => {
+    if (!(await ensurePermission())) {
+      status.refresh();
+      inform('Сповіщення вимкнені', 'Увімкніть їх для SubControl у налаштуваннях телефона, і нагадування почнуть приходити.');
+      openNotificationSettings();
+      return;
+    }
+    const next = subs.filter((x) => x.status === 'active').sort((a, b) => a.nextCharge.localeCompare(b.nextCharge))[0];
+    await sendTestReminder(next, settings, rates);
+    inform('Чекайте 5 секунд', 'Можна заблокувати екран: так видно, як нагадування виглядає насправді.');
+  };
 
   const setLead = (leadDays: Settings['leadDays']) => {
     if (leadDays !== 1 && !isPro) {
@@ -150,6 +176,58 @@ export default function SettingsScreen() {
           ]}
         />
       </Group>
+      <Group style={styles.gapGroup}>
+        {status.permission !== 'granted' && (
+          <>
+            <Line
+              icon="bell"
+              tone="danger"
+              title="Сповіщення вимкнені"
+              hint="Без них нагадування не прийдуть. Натисніть, щоб увімкнути"
+              onPress={enableNotifications}
+            />
+            <Divider inset={space(12)} />
+          </>
+        )}
+        <Line
+          icon="calendar"
+          title="Ще раз у день списання"
+          hint="Друге нагадування, якщо перше пропустили"
+          right={<Toggle value={settings.dayOf} onChange={(dayOf) => setSettings({ dayOf })} label="Ще раз у день списання" />}
+        />
+        <Divider inset={space(12)} />
+        {Platform.OS === 'android' ? (
+          <Line
+            icon="sound"
+            title="Чути навіть на беззвучному"
+            hint="Нагадування звучить як будильник. Вимкніть, якщо заважає"
+            right={<Toggle value={settings.loud} onChange={(loud) => setSettings({ loud })} label="Чути навіть на беззвучному" />}
+          />
+        ) : (
+          <Line
+            icon="sound"
+            title="На беззвучному буде вібрація"
+            hint="Звук з вимкненим перемикачем Apple дозволяє лише медичним застосункам. Зате нагадування пробʼється крізь режим фокусування"
+          />
+        )}
+        {Platform.OS === 'android' && !status.exact && (
+          <>
+            <Divider inset={space(12)} />
+            <Line
+              icon="bell"
+              tone="accent"
+              title="Нагадувати хвилина в хвилину"
+              hint="Дозвольте «Будильники й нагадування», інакше Android може зсунути час, щоб зберегти батарею"
+              onPress={async () => {
+                await askExactAlarms();
+                status.refresh();
+              }}
+            />
+          </>
+        )}
+        <Divider inset={space(12)} />
+        <Line icon="bolt" tone="accent" title="Перевірити нагадування" hint="Прийде через 5 секунд" onPress={testReminder} />
+      </Group>
 
       <SectionTitle>Звуки</SectionTitle>
       <Group>
@@ -251,6 +329,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   pad: { padding: space(4), gap: space(3) },
   gapTop: { marginTop: space(2) },
+  gapGroup: { marginTop: space(3) },
   proHint: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   about: { gap: space(2), marginTop: space(6), paddingHorizontal: space(4) },
 });

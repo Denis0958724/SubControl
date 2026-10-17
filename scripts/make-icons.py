@@ -38,7 +38,7 @@ def dial(size, bg, ring_scale=0.58, track=(255, 255, 255, 90), arc=WHITE, dot=AM
     return img.resize((size, size), Image.LANCZOS)
 
 
-dial(1024, COBALT, dot_ring=COBALT).save("assets/icon.png")
+dial(1024, COBALT, dot_ring=COBALT).convert("RGB").save("assets/icon.png")  # App Store: no transparency
 dial(1024, (0, 0, 0, 0), ring_scale=0.46, dot_ring=COBALT).save("assets/android-icon-foreground.png")
 dial(1024, (0, 0, 0, 0), ring_scale=0.46, track=(255, 255, 255, 110), arc=WHITE, dot=WHITE, mono=True).save(
     "assets/android-icon-monochrome.png"
@@ -48,4 +48,6 @@ dial(512, (0, 0, 0, 0), ring_scale=0.9, track=(47, 75, 255, 60), arc=COBALT, dot
     "assets/splash-icon.png"
 )
 dial(48, COBALT, dot_ring=COBALT).save("assets/favicon.png")
+# colour icon next to the reminder text on Android; the system crops it to a circle
+dial(256, COBALT, ring_scale=0.5, dot_ring=COBALT).save("assets/notification-large-icon.png")
 print("icons written")

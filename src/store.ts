@@ -36,7 +36,7 @@ interface State {
   rollDates: () => void;
 }
 
-const DEFAULT_SETTINGS: Settings = { leadDays: 1, hour: 10, sounds: true };
+const DEFAULT_SETTINGS: Settings = { leadDays: 1, hour: 12, sounds: true, dayOf: true, loud: true };
 
 const newId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
