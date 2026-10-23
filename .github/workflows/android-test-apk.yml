@@ -4,6 +4,16 @@ name: Тестовий APK для Android
 
 on:
   workflow_dispatch:
+  # a fresh test APK after every change to the app on main
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'assets/**'
+      - 'app.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android-test-apk.yml'
 
 permissions:
   contents: write
