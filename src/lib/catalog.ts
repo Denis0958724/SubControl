@@ -19,7 +19,7 @@ export interface Service {
   };
 }
 
-const viaStores = 'Оформлювали в застосунку на телефоні? Тоді скасування тільки через App Store або Google Play, кнопки нижче';
+const viaStores = 'Оформлювали в застосунку на телефоні? Тоді скасування тільки в магазині застосунків, кнопка нижче';
 
 /**
  * Order matters for matching: specific services first, store aggregators last.
@@ -81,7 +81,7 @@ export const SERVICES: Service[] = [
       steps: [
         'Відкрийте налаштування Google One',
         'Натисніть «Скасувати підписку»',
-        'Якщо оплачували через Google Play, скасуйте там',
+        'Якщо оплачували в застосунку на телефоні, скасуйте в магазині застосунків',
       ],
     },
   },
@@ -348,7 +348,7 @@ export const SERVICES: Service[] = [
 export const GENERIC_CANCEL_STEPS = [
   'Знайдіть у сервісі розділ «Акаунт», «Оплата» або «Підписка»',
   'Вимкніть автопродовження або скасуйте план',
-  'Якщо платите через App Store чи Google Play, скасування тільки там',
+  'Якщо платили в застосунку на телефоні, скасувати можна тільки в магазині застосунків',
 ];
 
 /** Services shown first on the "add" screen. */

@@ -1,14 +1,15 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, tap } from '../components/Button';
+import { Button, CobaltFill, tap } from '../components/Button';
 import { Icon, type IconName } from '../components/Icon';
-import { Header, Screen } from '../components/Layout';
+import { Header, IconTile, Screen } from '../components/Layout';
+import { FadeIn, PressableScale, stagger, useReducedMotion } from '../components/Motion';
 import { T } from '../components/T';
 import { inform } from '../lib/confirm';
 import { feedback } from '../lib/feedback';
-import { TERMS_URL } from '../lib/links';
+import { IN_STORE, STORE_NAME, TERMS_URL } from '../lib/links';
 import { openExternal } from '../lib/open';
 import { plural } from '../lib/dates';
 import {
@@ -22,14 +23,14 @@ import {
   type PlanId,
 } from '../lib/purchases';
 import { FREE_LIMIT, useStore } from '../store';
-import { fonts, radius, space, usePalette } from '../theme';
+import { fonts, radius, space, usePalette, type Tint } from '../theme';
 
-const FEATURES: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'bolt', title: 'Автопошук підписок', text: 'У виписці monobank, ПриватБанку та інших банків' },
-  { icon: 'users', title: 'Платимо разом', text: 'Скільки з кожного, якщо ділите підписку з родиною' },
-  { icon: 'bell', title: 'Нагадування за 3 дні або тиждень', text: 'Більше часу, щоб передумати' },
-  { icon: 'card', title: 'Скільки завгодно підписок', text: `Безкоштовно можна вести до ${FREE_LIMIT}` },
-  { icon: 'download', title: 'Експорт у таблицю', text: 'Для сімейного бюджету чи Google Таблиць' },
+const FEATURES: { icon: IconName; tint: Tint; title: string; text: string }[] = [
+  { icon: 'bolt', tint: 'violet', title: 'Автопошук підписок', text: 'Знайде забуте у виписці monobank, ПриватБанку та інших' },
+  { icon: 'users', tint: 'amber', title: 'Платимо разом', text: 'Скільки з кожного, якщо ділите підписку з родиною' },
+  { icon: 'bell', tint: 'cobalt', title: 'Нагадування за 3 дні або тиждень', text: 'Більше часу, щоб передумати' },
+  { icon: 'card', tint: 'green', title: 'Скільки завгодно підписок', text: `Безкоштовно до ${FREE_LIMIT}. Далі без ліміту` },
+  { icon: 'download', tint: 'ink', title: 'Таблиця для Excel', text: 'Для сімейного бюджету чи Google Таблиць' },
 ];
 
 const months = (n: number) => `${n} ${plural(n, ['місяць', 'місяці', 'місяців'])}`;
@@ -64,7 +65,7 @@ export default function Pro() {
       if (result === 'pro') done();
       else if (result === 'test') {
         done();
-        inform('Тестова збірка', 'Pro увімкнено безкоштовно. У версії з App Store і Google Play тут буде справжня оплата.');
+        inform('Тестова збірка', `Pro увімкнено безкоштовно. У версії з ${STORE_NAME} тут буде справжня оплата.`);
       } else if (result === 'off') {
         inform('Оплата ще не працює', 'Магазин поки не підключений. Спробуйте в наступній версії.');
       }
@@ -79,7 +80,7 @@ export default function Pro() {
     setRestoring(true);
     try {
       if (await restorePurchases()) done();
-      else inform('Покупок не знайдено', 'На цьому акаунті App Store чи Google Play ще немає SubControl Pro.');
+      else inform('Покупок не знайдено', `На цьому акаунті ${STORE_NAME} ще немає SubControl Pro.`);
     } catch {
       inform('Не вийшло', 'Немає звʼязку з магазином. Спробуйте ще раз.');
     } finally {
@@ -118,17 +119,23 @@ export default function Pro() {
       {reason === 'limit' && (
         <View style={[styles.note, { backgroundColor: p.amberSoft }]}>
           <T variant="label" color={p.ink}>
-            У безкоштовній версії можна вести до {FREE_LIMIT} підписок. Pro знімає обмеження.
+            Безкоштовно влазить {FREE_LIMIT} підписок. У вас уже стільки є. Чесно, це немало.
           </T>
         </View>
       )}
 
-      <View style={styles.hero}>
-        <T variant="title">SubControl Pro</T>
-        <T variant="body" muted>
-          Коштує менше, ніж одна забута підписка.
-        </T>
-      </View>
+      <FadeIn>
+        <View style={[styles.hero, { shadowColor: p.cobalt }]}>
+          <CobaltFill radius={radius.sheet} />
+          <Sparkle />
+          <T variant="title" color="#FFFFFF">
+            SubControl Pro
+          </T>
+          <T variant="body" color="#FFFFFF" style={styles.heroText}>
+            Коштує менше, ніж одна забута підписка.
+          </T>
+        </View>
+      </FadeIn>
 
       {plans === null ? (
         <View style={styles.loading}>
@@ -143,27 +150,26 @@ export default function Pro() {
       ) : (
         !isPro && (
           <View style={styles.plans}>
-            {plans.map((x) => (
-              <PlanCard
-                key={x.id}
-                plan={x}
-                selected={x.id === plan?.id}
-                onPress={() => {
-                  tap();
-                  setPlanId(x.id);
-                }}
-              />
+            {plans.map((x, i) => (
+              <FadeIn key={x.id} delay={stagger(i + 1, 70)}>
+                <PlanCard
+                  plan={x}
+                  selected={x.id === plan?.id}
+                  onPress={() => {
+                    tap();
+                    setPlanId(x.id);
+                  }}
+                />
+              </FadeIn>
             ))}
           </View>
         )
       )}
 
       <View style={styles.list}>
-        {FEATURES.map((f) => (
-          <View key={f.title} style={styles.feature}>
-            <View style={[styles.featureIcon, { backgroundColor: p.cobaltSoft }]}>
-              <Icon name={f.icon} size={20} color={p.cobalt} />
-            </View>
+        {FEATURES.map((f, i) => (
+          <FadeIn key={f.title} delay={stagger(i + 3, 50)} style={styles.feature}>
+            <IconTile icon={f.icon} tint={f.tint} size={44} />
             <View style={styles.flex}>
               <T variant="heading" style={{ fontSize: 16 }}>
                 {f.title}
@@ -172,18 +178,18 @@ export default function Pro() {
                 {f.text}
               </T>
             </View>
-          </View>
+          </FadeIn>
         ))}
       </View>
 
       <T variant="caption" muted style={styles.legal}>
-        Без Pro назавжди безкоштовно: список підписок, суми в гривнях, нагадування за день та інструкції, як
-        скасувати.
+        Без Pro теж нормально і назавжди безкоштовно: список підписок, суми в гривнях, нагадування за день та
+        інструкції, як скасувати.
       </T>
       {!isPro && plan && (
         <T variant="caption" muted style={styles.legalTight}>
-          {terms} Підписка продовжується сама, поки ви її не скасуєте. Скасувати можна будь-коли в налаштуваннях
-          App Store чи Google Play, щонайменше за добу до кінця періоду.
+          {terms} Підписка продовжується сама, поки ви її не скасуєте. Скасувати можна будь-коли в налаштуваннях{' '}
+          {STORE_NAME}, щонайменше за добу до кінця періоду. Оплата пройде {IN_STORE}.
         </T>
       )}
       <View style={styles.links}>
@@ -213,17 +219,17 @@ function PlanCard({ plan, selected, onPress }: { plan: Plan; selected: boolean; 
       : 'Можна скасувати будь-коли';
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       accessibilityLabel={`${yearly ? 'На рік' : 'На місяць'}, ${plan.promoPrice ?? plan.price}. ${hint}`}
       onPress={onPress}
-      style={({ pressed }) => [
+      to={0.98}
+      style={[
         styles.plan,
         {
-          backgroundColor: p.sheet,
+          backgroundColor: selected ? p.cobaltSoft : p.sheet,
           borderColor: selected ? p.cobalt : p.line,
-          opacity: pressed ? 0.8 : 1,
         },
       ]}
     >
@@ -255,7 +261,7 @@ function PlanCard({ plan, selected, onPress }: { plan: Plan; selected: boolean; 
         )}
         <T style={[styles.price, { color: p.ink }]}>{yearly ? plan.price : (plan.promoPrice ?? plan.price)}</T>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -274,7 +280,19 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   footer: { gap: space(1) },
   note: { borderRadius: 16, padding: space(4) },
-  hero: { gap: space(1), paddingTop: space(2), paddingBottom: space(2) },
+  hero: {
+    gap: space(1),
+    borderRadius: radius.sheet,
+    padding: space(5),
+    paddingTop: space(6),
+    overflow: 'hidden',
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
+  },
+  heroText: { opacity: 0.88 },
+  sparkle: { position: 'absolute', right: space(5), top: space(5) },
   loading: { height: 160, alignItems: 'center', justifyContent: 'center' },
   plans: { gap: space(3) },
   plan: {
@@ -297,8 +315,25 @@ const styles = StyleSheet.create({
   price: { fontFamily: fonts.display, fontSize: 20, lineHeight: 26, letterSpacing: -0.3 },
   list: { gap: space(5), marginTop: space(6) },
   feature: { flexDirection: 'row', gap: space(4), alignItems: 'center' },
-  featureIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   legal: { marginTop: space(6) },
   legalTight: { marginTop: space(2) },
   links: { flexDirection: 'row', gap: space(5), marginTop: space(3) },
 });
+
+/** The Pro star turns slowly in the corner of the hero card. */
+function Sparkle() {
+  const reduce = useReducedMotion();
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduce) return;
+    const loop = Animated.loop(Animated.timing(v, { toValue: 1, duration: 9000, easing: Easing.linear, useNativeDriver: true }));
+    loop.start();
+    return () => loop.stop();
+  }, [v, reduce]);
+  const rotate = v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  return (
+    <Animated.View style={[styles.sparkle, { transform: [{ rotate }] }]} pointerEvents="none">
+      <Icon name="sparkle" size={56} color="rgba(255,255,255,0.35)" strokeWidth={1.6} />
+    </Animated.View>
+  );
+}

@@ -17,3 +17,27 @@ export const PRIVACY_URL = `${SITE_URL}privacy.html`;
  * The site picks it up from here on the next publish.
  */
 export const CONTACT_EMAIL = '';
+
+/**
+ * Which store this copy of the app came from. Apple rejects apps that mention other platforms
+ * (guideline 2.3.10), so on a phone the texts only ever name their own store.
+ * The web preview shows both, unless localStorage "subcontrol:store" says "ios" or "android" (for store screenshots).
+ */
+export type StoreKind = 'ios' | 'android' | 'both';
+
+function previewStore(): StoreKind {
+  try {
+    const ls = (globalThis as { localStorage?: { getItem: (k: string) => string | null } }).localStorage;
+    const s = ls?.getItem('subcontrol:store');
+    return s === 'ios' || s === 'android' ? s : 'both';
+  } catch {
+    return 'both';
+  }
+}
+
+export const STORE: StoreKind = Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : previewStore();
+
+export const STORE_NAME = STORE === 'android' ? 'Google Play' : STORE === 'ios' ? 'App Store' : 'App Store чи Google Play';
+
+/** "в App Store" / "у Google Play": the preposition follows the next sound. */
+export const IN_STORE = STORE === 'android' ? 'у Google Play' : STORE === 'ios' ? 'в App Store' : 'в App Store чи Google Play';

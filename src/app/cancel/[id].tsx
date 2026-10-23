@@ -1,9 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '../../components/Button';
-import { Icon } from '../../components/Icon';
-import { Divider, Group, Header, Line, Screen, SectionTitle } from '../../components/Layout';
+import { Divider, Group, Header, IconTile, Line, ROW_INSET, Screen, SectionTitle } from '../../components/Layout';
+import { Monogram } from '../../components/Monogram';
+import { FadeIn, stagger } from '../../components/Motion';
 import { T } from '../../components/T';
 import {
   APPLE_SUBSCRIPTIONS_URL,
@@ -12,12 +13,13 @@ import {
   findService,
 } from '../../lib/catalog';
 import { formatDate, relativeDay, todayISO } from '../../lib/dates';
-import { chargeUAH, formatUAH } from '../../lib/money';
+import { chargeUAH, formatUAH, yearlyUAH } from '../../lib/money';
 import { feedback } from '../../lib/feedback';
+import { STORE } from '../../lib/links';
 import { openExternal } from '../../lib/open';
+import { celebrate, toast } from '../../lib/toast';
 import { useStore } from '../../store';
-import { fonts, space, usePalette } from '../../theme';
-
+import { fonts, radius, space, usePalette } from '../../theme';
 
 export default function CancelGuide() {
   const p = usePalette();
@@ -40,10 +42,12 @@ export default function CancelGuide() {
   const service = findService(sub.serviceId);
   const steps = service?.cancel.steps ?? GENERIC_CANCEL_STEPS;
   const url = service?.cancel.url;
+  const yearly = yearlyUAH(sub, rates);
+  // each phone only talks about its own store
   const stores =
-    Platform.OS === 'ios'
+    STORE === 'ios'
       ? [{ title: 'Підписки App Store', url: APPLE_SUBSCRIPTIONS_URL }]
-      : Platform.OS === 'android'
+      : STORE === 'android'
         ? [{ title: 'Підписки Google Play', url: GOOGLE_SUBSCRIPTIONS_URL }]
         : [
             { title: 'Підписки App Store', url: APPLE_SUBSCRIPTIONS_URL },
@@ -52,36 +56,64 @@ export default function CancelGuide() {
 
   const done = () => {
     cancel(sub.id);
-    feedback('cancel');
+    feedback('success');
+    celebrate();
+    toast({ title: `Мінус ${formatUAH(yearly)} на рік`, text: `${sub.name} більше не рахуємо. Так і треба.`, tone: 'saved' });
     router.dismissTo('/');
   };
 
   return (
     <Screen
       header={<Header onBack={() => router.back()} />}
-      footer={<Button title="Я скасував(ла) підписку" icon="check" onPress={done} sound={false} />}
+      footer={<Button title="Готово, скасував(ла)" icon="check" onPress={done} sound={false} />}
     >
-      <T variant="title">Скасувати {sub.name}</T>
-      <T variant="body" muted>
-        Наступне списання {formatUAH(chargeUAH(sub, rates))} буде {formatDate(sub.nextCharge)},{' '}
-        {relativeDay(sub.nextCharge, today)}. Скасуйте до цієї дати, і гроші не спишуться.
-      </T>
+      <FadeIn style={styles.head}>
+        <Monogram name={sub.name} color={sub.color} size={52} />
+        <View style={styles.flex}>
+          <T variant="title">Скасувати {sub.name}</T>
+          <T variant="label" muted>
+            {formatUAH(chargeUAH(sub, rates))} спишуть {formatDate(sub.nextCharge)}, {relativeDay(sub.nextCharge, today)}
+          </T>
+        </View>
+      </FadeIn>
 
+      <FadeIn delay={80}>
+        <View style={[styles.win, { backgroundColor: p.greenSoft }]}>
+          <IconTile icon="wallet" tint="green" size={40} />
+          <View style={styles.flex}>
+            <T variant="caption" color={p.green} style={styles.winLabel}>
+              Встигнете до списання, і за рік залишиться
+            </T>
+            <T style={[styles.winValue, { color: p.green }]}>{formatUAH(yearly)}</T>
+          </View>
+        </View>
+      </FadeIn>
+
+      <SectionTitle>Як це зробити</SectionTitle>
       <Group style={styles.steps}>
         {steps.map((step, i) => (
-          <View key={step} style={styles.step}>
-            <View style={[styles.num, { backgroundColor: p.cobaltSoft }]}>
-              <T variant="label" color={p.cobalt} style={{ fontFamily: fonts.semibold }}>
-                {i + 1}
-              </T>
+          <FadeIn key={step} delay={stagger(i, 70) + 140} style={styles.step}>
+            <View style={styles.rail}>
+              <View style={[styles.num, { backgroundColor: p.cobalt }]}>
+                <T variant="label" color={p.onCobalt} style={styles.numText}>
+                  {i + 1}
+                </T>
+              </View>
+              {i < steps.length - 1 && <View style={[styles.line, { backgroundColor: p.cobaltSoft }]} />}
             </View>
-            <T variant="body" style={styles.flex}>
+            <T variant="body" style={[styles.flex, styles.stepText]}>
               {step}
             </T>
-          </View>
+          </FadeIn>
         ))}
         {url && (
-          <Button title="Відкрити сторінку скасування" icon="external" onPress={() => openExternal(url)} kind="secondary" />
+          <Button
+            title="Відкрити сторінку скасування"
+            icon="external"
+            onPress={() => openExternal(url)}
+            kind="secondary"
+            style={styles.open}
+          />
         )}
       </Group>
 
@@ -89,21 +121,21 @@ export default function CancelGuide() {
       <Group>
         {stores.map((s, i) => (
           <View key={s.url}>
-            {i > 0 && <Divider inset={space(12)} />}
-            <Line icon="external" title={s.title} onPress={() => openExternal(s.url)} />
+            {i > 0 && <Divider inset={ROW_INSET} />}
+            <Line icon="external" tint="ink" title={s.title} onPress={() => openExternal(s.url)} />
           </View>
         ))}
       </Group>
 
       <View style={[styles.tip, { backgroundColor: p.amberSoft }]}>
-        <Icon name="shield" size={22} color={p.amber} />
+        <IconTile icon="shield" tint="amber" size={36} />
         <View style={styles.flex}>
           <T variant="heading" style={styles.tipTitle}>
-            Сервіс не дає скасувати?
+            Сервіс не відпускає?
           </T>
           <T variant="body" color={p.inkSoft}>
-            Напишіть у підтримку свого банку: там можуть зупинити регулярні списання цього продавця або допомогти
-            оскаржити платіж, якщо гроші списали вже після скасування.
+            Напишіть у підтримку свого банку. Там можуть зупинити регулярні списання цього продавця або допомогти
+            повернути гроші, якщо їх списали вже після скасування.
           </T>
         </View>
       </View>
@@ -112,10 +144,19 @@ export default function CancelGuide() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  steps: { padding: space(4), gap: space(4), marginTop: space(2) },
-  step: { flexDirection: 'row', gap: space(3), alignItems: 'flex-start' },
+  flex: { flex: 1, minWidth: 0 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space(4), paddingTop: space(2) },
+  win: { flexDirection: 'row', alignItems: 'center', gap: space(3), borderRadius: radius.card, padding: space(4) },
+  winLabel: { fontFamily: fonts.semibold },
+  winValue: { fontFamily: fonts.display, fontSize: 24, lineHeight: 30, letterSpacing: -0.4 },
+  steps: { padding: space(4), gap: 0 },
+  step: { flexDirection: 'row', gap: space(3), alignItems: 'stretch' },
+  rail: { alignItems: 'center', width: 28 },
   num: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  tip: { flexDirection: 'row', gap: space(3), borderRadius: 20, padding: space(4), marginTop: space(4) },
+  numText: { fontFamily: fonts.semibold },
+  line: { width: 2, flex: 1, minHeight: 14, marginVertical: 4, borderRadius: 1 },
+  stepText: { paddingTop: 2, paddingBottom: space(4) },
+  open: { marginTop: space(1) },
+  tip: { flexDirection: 'row', gap: space(3), borderRadius: radius.card, padding: space(4), marginTop: space(4) },
   tipTitle: { marginBottom: space(1) },
 });

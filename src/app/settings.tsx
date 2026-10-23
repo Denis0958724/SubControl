@@ -3,9 +3,13 @@ import { useState } from 'react';
 import Constants from 'expo-constants';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
-import { Divider, Group, Header, Line, ProBadge, Screen, SectionTitle } from '../components/Layout';
+import { CobaltFill } from '../components/Button';
+import { Icon } from '../components/Icon';
+import { Divider, Group, Header, Line, ProBadge, ROW_INSET, Screen, SectionTitle } from '../components/Layout';
+import { LogoMark } from '../components/LogoMark';
+import { FadeIn, PressableScale } from '../components/Motion';
 import { Segmented } from '../components/Segmented';
 import { T } from '../components/T';
 import { Toggle } from '../components/Toggle';
@@ -27,10 +31,9 @@ import { forgetToken } from '../lib/secure';
 import type { Settings } from '../lib/types';
 import { useReminderStatus } from '../lib/useReminderStatus';
 import { useStore } from '../store';
-import { space, usePalette } from '../theme';
+import { radius, space, usePalette } from '../theme';
 
 export default function SettingsScreen() {
-  const p = usePalette();
   const settings = useStore((s) => s.settings);
   const setSettings = useStore((s) => s.setSettings);
   const isPro = useStore((s) => s.isPro);
@@ -113,36 +116,26 @@ export default function SettingsScreen() {
 
   return (
     <Screen header={<Header title="Налаштування" onBack={() => router.back()} />}>
-      <Group>
-        {isPro ? (
-          <>
-            <Line icon="star" tone="accent" title="SubControl Pro активний" hint="Дякуємо, що підтримуєте застосунок" />
-            {BILLING === 'store' && (
-              <>
-                <Divider inset={space(12)} />
-                <Line
-                  icon="card"
-                  title="Керувати підпискою Pro"
-                  hint={Platform.OS === 'android' ? 'У Google Play' : 'В App Store'}
-                  onPress={async () => openExternal(await manageSubscriptionUrl())}
-                />
-              </>
-            )}
-          </>
-        ) : (
-          <Line
-            icon="star"
-            tone="accent"
-            title="SubControl Pro"
-            hint="Автопошук у виписці банку, родинний розподіл, без обмежень"
-            onPress={() => router.push('/pro')}
-          />
+      <FadeIn>
+        <ProCard isPro={isPro} />
+        {isPro && BILLING === 'store' && (
+          <Group style={styles.gapGroup}>
+            <Line
+              icon="card"
+              tint="violet"
+              title="Керувати підпискою Pro"
+              hint={Platform.OS === 'android' ? 'У Google Play' : 'В App Store'}
+              onPress={async () => openExternal(await manageSubscriptionUrl())}
+            />
+          </Group>
         )}
-      </Group>
+      </FadeIn>
 
       <SectionTitle>Нагадування</SectionTitle>
       <Group style={styles.pad}>
-        <T variant="body">Коли нагадувати</T>
+        <T variant="label" muted>
+          Коли нагадувати
+        </T>
         <Segmented
           value={settings.leadDays}
           onChange={setLead}
@@ -152,15 +145,7 @@ export default function SettingsScreen() {
             { value: 7, label: 'За тиждень', locked: !isPro },
           ]}
         />
-        {!isPro && (
-          <View style={styles.proHint}>
-            <ProBadge />
-            <T variant="caption" muted>
-              нагадування за 3 дні й за тиждень
-            </T>
-          </View>
-        )}
-        <T variant="body" style={styles.gapTop}>
+        <T variant="label" muted style={styles.gapTop}>
           О котрій
         </T>
         <Segmented
@@ -183,27 +168,30 @@ export default function SettingsScreen() {
               hint="Без них нагадування не прийдуть. Натисніть, щоб увімкнути"
               onPress={enableNotifications}
             />
-            <Divider inset={space(12)} />
+            <Divider inset={ROW_INSET} />
           </>
         )}
         <Line
           icon="calendar"
+          tint="amber"
           title="Ще раз у день списання"
-          hint="Друге нагадування, якщо перше пропустили"
+          hint="Для тих, хто пропускає перше"
           right={<Toggle value={settings.dayOf} onChange={(dayOf) => setSettings({ dayOf })} label="Ще раз у день списання" />}
         />
-        <Divider inset={space(12)} />
+        <Divider inset={ROW_INSET} />
         {Platform.OS === 'android' ? (
           <Line
             icon="sound"
+            tint="red"
             title="Чути навіть на беззвучному"
-            hint="Нагадування звучить як будильник. Вимкніть, якщо заважає"
+            hint="Звучить як будильник. Вимкніть, якщо заважає"
             right={<Toggle value={settings.loud} onChange={(loud) => setSettings({ loud })} label="Чути навіть на беззвучному" />}
           />
         ) : (
           <>
             <Line
-              icon="star"
+              icon="island"
+              tint="ink"
               title="Dynamic Island і екран блокування"
               hint="Списання сьогодні чи завтра висить там, поки не вирішите"
               right={
@@ -214,22 +202,23 @@ export default function SettingsScreen() {
                 />
               }
             />
-            <Divider inset={space(12)} />
+            <Divider inset={ROW_INSET} />
             <Line
               icon="sound"
+              tint="red"
               title="На беззвучному буде вібрація"
-              hint="Звук з вимкненим перемикачем Apple дозволяє лише медичним застосункам. Зате нагадування пробʼється крізь режим фокусування"
+              hint="Звук при вимкненому перемикачі Apple дає лише медичним застосункам. Зате нагадування пробʼється крізь режим фокусування"
             />
           </>
         )}
         {Platform.OS === 'android' && !status.exact && (
           <>
-            <Divider inset={space(12)} />
+            <Divider inset={ROW_INSET} />
             <Line
-              icon="bell"
+              icon="clock"
               tone="accent"
               title="Нагадувати хвилина в хвилину"
-              hint="Дозвольте «Будильники й нагадування», інакше Android може зсунути час, щоб зберегти батарею"
+              hint="Дозвольте «Будильники й нагадування», інакше система може зсунути час заради батареї"
               onPress={async () => {
                 await askExactAlarms();
                 status.refresh();
@@ -237,28 +226,30 @@ export default function SettingsScreen() {
             />
           </>
         )}
-        <Divider inset={space(12)} />
-        <Line icon="bolt" tone="accent" title="Перевірити нагадування" hint="Прийде через 5 секунд" onPress={testReminder} />
+        <Divider inset={ROW_INSET} />
+        <Line icon="bolt" tint="violet" tone="accent" title="Перевірити нагадування" hint="Прийде через 5 секунд" onPress={testReminder} />
       </Group>
 
       <SectionTitle>Звуки</SectionTitle>
       <Group>
         <Line
           icon="sound"
+          tint="green"
           title="Звуки натискань"
-          hint="Тихі, і мовчать, коли телефон на беззвучному"
+          hint="Тихі. І мовчать, коли телефон на беззвучному"
           right={<Toggle value={settings.sounds} onChange={(sounds) => setSettings({ sounds })} label="Звуки натискань" />}
         />
       </Group>
 
       <SectionTitle>Курс валют</SectionTitle>
       <Group>
-        <Line title="Долар" value={`${formatNumber(rates.USD, 2)} ₴`} />
-        <Divider />
-        <Line title="Євро" value={`${formatNumber(rates.EUR, 2)} ₴`} />
-        <Divider />
+        <Line glyph="$" tint="green" title="Долар" value={`${formatNumber(rates.USD, 2)} ₴`} />
+        <Divider inset={ROW_INSET} />
+        <Line glyph="€" tint="cobalt" title="Євро" value={`${formatNumber(rates.EUR, 2)} ₴`} />
+        <Divider inset={ROW_INSET} />
         <Line
           icon="refresh"
+          tint="ink"
           tone="accent"
           title={refreshing ? 'Оновлюю…' : 'Оновити курс'}
           hint={rateHint}
@@ -270,6 +261,7 @@ export default function SettingsScreen() {
       <Group>
         <Line
           icon="bolt"
+          tint="violet"
           title="Знайти підписки у виписці"
           hint="monobank, ПриватБанк та інші банки"
           right={!isPro ? <ProBadge /> : undefined}
@@ -277,7 +269,7 @@ export default function SettingsScreen() {
         />
         {monoConnected && (
           <>
-            <Divider inset={space(12)} />
+            <Divider inset={ROW_INSET} />
             <Line
               icon="trash"
               tone="danger"
@@ -296,18 +288,20 @@ export default function SettingsScreen() {
       <Group>
         <Line
           icon="download"
+          tint="green"
           title="Таблиця для Excel"
           hint="Excel, Google Таблиці, Numbers"
           right={!isPro ? <ProBadge /> : undefined}
           onPress={exportTable}
         />
-        <Divider inset={space(12)} />
+        <Divider inset={ROW_INSET} />
         <Line
           icon="trash"
           tone="danger"
           title="Видалити всі дані"
+          hint="Список і налаштування на цьому телефоні"
           onPress={async () => {
-            if (!(await confirm('Видалити всі дані?', 'Список підписок і налаштування зникнуть з цього телефона.', 'Видалити', true))) return;
+            if (!(await confirm('Видалити всі дані?', 'Список підписок і налаштування зникнуть з цього телефона. Назад не повернути.', 'Видалити', true))) return;
             await forgetToken();
             setMonoConnected(false);
             resetAll();
@@ -316,33 +310,71 @@ export default function SettingsScreen() {
         />
       </Group>
 
+      <SectionTitle>Про застосунок</SectionTitle>
+      <Group>
+        <Line icon="help" tint="ink" title="Допомога й підтримка" onPress={() => openExternal(SUPPORT_URL)} />
+        <Divider inset={ROW_INSET} />
+        <Line icon="doc" tint="ink" title="Політика конфіденційності" onPress={() => router.push('/privacy')} />
+      </Group>
+
       <View style={styles.about}>
-        <T variant="caption" muted center>
-          Підписки зберігаються тільки на цьому телефоні. SubControl не має доступу до ваших грошей і нічого не
-          списує сам.
-        </T>
-        <Pressable accessibilityRole="link" onPress={() => openExternal(SUPPORT_URL)} hitSlop={8}>
-          <T variant="caption" color={p.cobalt} center>
-            Допомога й підтримка
-          </T>
-        </Pressable>
-        <Pressable accessibilityRole="link" onPress={() => router.push('/privacy')} hitSlop={8}>
-          <T variant="caption" color={p.cobalt} center>
-            Політика конфіденційності
-          </T>
-        </Pressable>
+        <LogoMark size={30} />
         <T variant="caption" muted center>
           SubControl {Constants.expoConfig?.version ?? ''}
+        </T>
+        <T variant="caption" muted center style={styles.aboutText}>
+          Підписки живуть тільки на цьому телефоні. До ваших грошей SubControl доступу не має і нічого не списує сам.
         </T>
       </View>
     </Screen>
   );
 }
 
+/** The Pro card at the top of settings: an invitation, or a thank-you once bought. */
+function ProCard({ isPro }: { isPro: boolean }) {
+  const p = usePalette();
+  const body = (
+    <View style={styles.proCard}>
+      <CobaltFill radius={radius.sheet} />
+      <View style={[styles.proGlyph, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
+        <Icon name="sparkle" size={22} color="#FFFFFF" />
+      </View>
+      <View style={styles.flex}>
+        <T variant="heading" color="#FFFFFF">
+          {isPro ? 'Pro активний' : 'SubControl Pro'}
+        </T>
+        <T variant="caption" color="#FFFFFF" style={styles.proText}>
+          {isPro ? 'Дякуємо. Тепер можна все, і без обмежень.' : 'Автопошук у виписці, родинний розподіл, без обмежень'}
+        </T>
+      </View>
+      {!isPro && <Icon name="chevronRight" size={20} color="#FFFFFF" />}
+    </View>
+  );
+  if (isPro) return body;
+  return (
+    <PressableScale accessibilityRole="button" accessibilityLabel="SubControl Pro" to={0.98} onPress={() => router.push('/pro')} style={{ shadowColor: p.cobalt, ...styles.proShadow }}>
+      {body}
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
+  flex: { flex: 1, minWidth: 0 },
   pad: { padding: space(4), gap: space(3) },
   gapTop: { marginTop: space(2) },
   gapGroup: { marginTop: space(3) },
-  proHint: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
-  about: { gap: space(2), marginTop: space(6), paddingHorizontal: space(4) },
+  about: { gap: space(2), marginTop: space(8), paddingHorizontal: space(4), alignItems: 'center' },
+  aboutText: { maxWidth: 320 },
+  proCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(3),
+    borderRadius: radius.sheet,
+    padding: space(4),
+    minHeight: 84,
+    overflow: 'hidden',
+  },
+  proGlyph: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  proText: { opacity: 0.85 },
+  proShadow: { shadowOpacity: 0.3, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 6, borderRadius: radius.sheet },
 });

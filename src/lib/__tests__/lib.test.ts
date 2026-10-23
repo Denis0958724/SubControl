@@ -125,3 +125,30 @@ describe('badges for detected store charges', () => {
     expect(initials('Apple (4,99 $)')).toBe('A');
   });
 });
+
+describe('billing period helpers', () => {
+  it('steps one cycle back, keeping the anchor day', async () => {
+    const { previousCharge } = await import('../dates');
+    expect(previousCharge('2026-03-31', 'month', 31)).toBe('2026-02-28');
+    expect(previousCharge('2026-01-15', 'month', 15)).toBe('2025-12-15');
+    expect(previousCharge('2026-10-24', 'week')).toBe('2026-10-17');
+    expect(previousCharge('2027-02-28', 'year', 29)).toBe('2026-02-28');
+  });
+
+  it('measures how far through the period today is', async () => {
+    const { cycleProgress } = await import('../dates');
+    expect(cycleProgress('2026-10-24', 'week', 24, '2026-10-17')).toBe(0);
+    expect(cycleProgress('2026-10-24', 'week', 24, '2026-10-24')).toBe(1);
+    expect(cycleProgress('2026-11-01', 'month', 1, '2026-10-16')).toBeCloseTo(15 / 31);
+  });
+});
+
+describe('yearly comparisons', () => {
+  it('only offers comparisons that make sense for the amount', async () => {
+    const { perspectives } = await import('../perspective');
+    expect(perspectives(100)).toEqual([]);
+    const list = perspectives(27_763);
+    expect(list[0]).toBe('185 шаурм');
+    expect(list.every((s) => !/^[01] /.test(s))).toBe(true);
+  });
+});

@@ -95,12 +95,16 @@ async def shoot():
     async with async_playwright() as p:
         b = await p.chromium.launch()
 
-        async def ctx(scheme, data):
+        # "subcontrol:store" makes the preview name only that store, like the real app on that phone does
+        async def ctx(scheme, data, store="ios"):
             c = await b.new_context(viewport={"width": 440, "height": 956}, device_scale_factor=3, color_scheme=scheme)
-            await c.add_init_script(f"localStorage.setItem('subcontrol', {json.dumps(json.dumps(data))});")
+            await c.add_init_script(
+                f"localStorage.setItem('subcontrol', {json.dumps(json.dumps(data))});"
+                f"localStorage.setItem('subcontrol:store', '{store}');"
+            )
             page = await c.new_page()
             await page.goto(URL)
-            await page.wait_for_timeout(1800)
+            await page.wait_for_timeout(2400)
             return c, page
 
         vis = lambda page, t: page.locator(f"text={t} >> visible=true").last
@@ -108,11 +112,19 @@ async def shoot():
         c, page = await ctx("light", state(SUBS))
         await page.screenshot(path=RAW / "home-light.png")
         await vis(page, "Netflix").click()
-        await page.wait_for_timeout(700)
+        await page.wait_for_timeout(1400)
         await page.screenshot(path=RAW / "detail-light.png")
         await vis(page, "Як скасувати").click()
-        await page.wait_for_timeout(700)
-        await page.screenshot(path=RAW / "cancel-light.png")
+        await page.wait_for_timeout(1400)
+        await page.screenshot(path=RAW / "cancel-light-ios.png")
+        await c.close()
+
+        c, page = await ctx("light", state(SUBS), store="android")
+        await vis(page, "Netflix").click()
+        await page.wait_for_timeout(900)
+        await vis(page, "Як скасувати").click()
+        await page.wait_for_timeout(1400)
+        await page.screenshot(path=RAW / "cancel-light-android.png")
         await c.close()
 
         c, page = await ctx("dark", state(SUBS))
@@ -121,13 +133,13 @@ async def shoot():
 
         c, page = await ctx("light", state([], pro=True))
         await vis(page, "Знайти у виписці банку").click()
-        await page.wait_for_timeout(600)
+        await page.wait_for_timeout(900)
         await vis(page, "ПриватБанк").click()
-        await page.wait_for_timeout(600)
+        await page.wait_for_timeout(900)
         async with page.expect_file_chooser() as fc:
             await vis(page, "Обрати файл").click()
         await (await fc.value).set_files([str(FIXTURE)])
-        await page.wait_for_timeout(1500)
+        await page.wait_for_timeout(1800)
         await page.screenshot(path=RAW / "import-light.png")
         await c.close()
 
@@ -135,7 +147,7 @@ async def shoot():
         await page.get_by_label("Налаштування").click()
         await page.wait_for_timeout(500)
         await vis(page, "SubControl Pro").click()
-        await page.wait_for_timeout(700)
+        await page.wait_for_timeout(1400)
         await page.screenshot(path=RAW / "pro-light.png")
         await c.close()
         await b.close()
@@ -166,7 +178,13 @@ SLIDES = [
 APP_ICON = ROOT / "assets/icon.png"
 
 
-def frame_html(w, h, shot, title, sub_text, bg, notif):
+def raw_for(shot, platform):
+    """A per-store raw shot when there is one (texts that name the store), else the shared one."""
+    own = RAW / f"{shot}-{platform}.png"
+    return own if own.exists() else RAW / f"{shot}.png"
+
+
+def frame_html(w, h, shot, title, sub_text, bg, notif, platform="ios"):
     pad = round(w * 0.075)
     title_size = round(w * 0.082)
     sub_size = round(w * 0.036)
@@ -205,7 +223,7 @@ def frame_html(w, h, shot, title, sub_text, bg, notif):
     .act.cancel{{background:#FDECEC;color:#D93D42}}
     </style></head><body>
     <div class="t"><h1>{title}</h1><p>{sub_text}</p></div>
-    <img class="shot" src="{data_uri(RAW / (shot + '.png'))}">
+    <img class="shot" src="{data_uri(raw_for(shot, platform))}">
     {notif_html}
     </body></html>"""
 
@@ -233,7 +251,7 @@ async def compose():
         for folder, w, h in (("ios", 1320, 2868), ("android", 1080, 1920)):
             page = await b.new_page(viewport={"width": w, "height": h}, device_scale_factor=1)
             for i, (shot, title, sub_text, bg, notif) in enumerate(SLIDES, 1):
-                await page.set_content(frame_html(w, h, shot, title, sub_text, bg, notif))
+                await page.set_content(frame_html(w, h, shot, title, sub_text, bg, notif, folder))
                 await page.wait_for_timeout(300)
                 await page.screenshot(path=OUT / folder / f"{i}-{shot.split('-')[0]}.png")
             await page.close()
@@ -242,6 +260,9 @@ async def compose():
         await page.wait_for_timeout(300)
         await page.screenshot(path=OUT / "android" / "feature-graphic.png")
         await b.close()
+
+    # App Review wants a screenshot of the purchase screen next to each subscription
+    Image.open(RAW / "pro-light.png").convert("RGB").save(OUT / "ios" / "iap-review-paywall.png")
 
     icon = Image.open(APP_ICON).convert("RGB")
     icon.save(OUT / "ios" / "icon-1024.png")  # App Store: no transparency

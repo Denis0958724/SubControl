@@ -1,38 +1,50 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Header, Screen } from '../components/Layout';
+import type { IconName } from '../components/Icon';
+import { Group, Header, IconTile, Screen } from '../components/Layout';
+import { FadeIn, stagger } from '../components/Motion';
 import { T } from '../components/T';
-import { CONTACT_EMAIL } from '../lib/links';
-import { space } from '../theme';
+import { CONTACT_EMAIL, STORE, STORE_NAME } from '../lib/links';
+import { space, type Tint } from '../theme';
+
+const VAULT = STORE === 'ios' ? 'Keychain' : STORE === 'android' ? 'Keystore' : 'Keychain на iPhone, Keystore на Android';
 
 /** Same text as PRIVACY.md. The stores want the policy reachable from inside the app too. */
-const SECTIONS: { title: string; text: string[] }[] = [
+const SECTIONS: { title: string; icon: IconName; tint: Tint; text: string[] }[] = [
   {
     title: 'Коротко',
+    icon: 'shield',
+    tint: 'green',
     text: [
       'Даних ми збираємо якомога менше. Точніше, майже не збираємо. Серверів, куди можна було б щось передати, у SubControl немає.',
     ],
   },
   {
     title: 'Що зберігається на телефоні',
+    icon: 'lock',
+    tint: 'cobalt',
     text: [
       'Список підписок і налаштування. Лише на вашому пристрої.',
-      'Токен monobank, якщо ви ввімкнули автопошук. Лежить у захищеному сховищі системи: Keychain на iPhone, Keystore на Android. З ним можна лише переглядати виписку.',
+      `Токен monobank, якщо ви ввімкнули автопошук. Лежить у захищеному сховищі системи (${VAULT}). З ним можна лише переглядати виписку.`,
       'Виписки monobank і файли виписок інших банків читаються на телефоні. Після пошуку зберігаються тільки підписки, які ви самі додали.',
     ],
   },
   {
     title: 'Куди застосунок ходить в інтернет',
+    icon: 'external',
+    tint: 'violet',
     text: [
       'api.monobank.ua: курси валют і, за вашою згодою, виписка картки.',
       'bank.gov.ua: курс НБУ, якщо monobank недоступний.',
-      'App Store або Google Play і сервіс RevenueCat: лише для оплати Pro і перевірки, чи вона активна. RevenueCat отримує випадковий ідентифікатор застосунку й історію покупок Pro. Імені, пошти чи номера картки там немає.',
+      `${STORE_NAME} і сервіс RevenueCat: лише для оплати Pro і перевірки, чи вона активна. RevenueCat отримує випадковий ідентифікатор застосунку й історію покупок Pro. Імені, пошти чи номера картки там немає.`,
       'Сторінки сервісів на кшталт Netflix відкриваються, тільки коли ви натискаєте кнопку скасування.',
     ],
   },
   {
     title: 'Чого ми не робимо',
+    icon: 'close',
+    tint: 'red',
     text: [
       'Не показуємо рекламу й не продаємо дані.',
       'Не ставимо аналітику чи трекери.',
@@ -41,8 +53,10 @@ const SECTIONS: { title: string; text: string[] }[] = [
   },
   {
     title: 'Як усе видалити',
+    icon: 'trash',
+    tint: 'ink',
     text: [
-      'Налаштування, «Видалити всі дані». Або просто видаліть застосунок. Підписку Pro це не скасує: її скасовують у налаштуваннях App Store чи Google Play.',
+      `Налаштування, «Видалити всі дані». Або просто видаліть застосунок. Підписку Pro це не скасує: її скасовують у налаштуваннях ${STORE_NAME}.`,
     ],
   },
 ];
@@ -50,28 +64,40 @@ const SECTIONS: { title: string; text: string[] }[] = [
 export default function Privacy() {
   return (
     <Screen header={<Header title="Конфіденційність" onBack={() => router.back()} />}>
-      {SECTIONS.map((s) => (
-        <View key={s.title} style={styles.section}>
-          <T variant="heading">{s.title}</T>
-          {s.text.map((t) => (
-            <T key={t} variant="body" muted>
-              {t}
-            </T>
-          ))}
-        </View>
+      {SECTIONS.map((s, i) => (
+        <FadeIn key={s.title} delay={stagger(i, 60)}>
+          <Group style={styles.card}>
+            <View style={styles.head}>
+              <IconTile icon={s.icon} tint={s.tint} />
+              <T variant="heading" style={styles.flex}>
+                {s.title}
+              </T>
+            </View>
+            {s.text.map((t) => (
+              <T key={t} variant="body" muted>
+                {t}
+              </T>
+            ))}
+          </Group>
+        </FadeIn>
       ))}
       {CONTACT_EMAIL !== '' && (
-        <View style={styles.section}>
-          <T variant="heading">Звʼязок</T>
+        <Group style={styles.card}>
+          <View style={styles.head}>
+            <IconTile icon="help" tint="amber" />
+            <T variant="heading">Звʼязок</T>
+          </View>
           <T variant="body" muted selectable>
             {CONTACT_EMAIL}
           </T>
-        </View>
+        </Group>
       )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { gap: space(2), marginBottom: space(5) },
+  flex: { flex: 1 },
+  card: { padding: space(4), gap: space(2) },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space(3), marginBottom: space(1) },
 });

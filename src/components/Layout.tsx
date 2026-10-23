@@ -2,7 +2,6 @@ import { type ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -10,10 +9,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { radius, space, usePalette } from '../theme';
+import { fonts, radius, space, tintColors, usePalette, type Tint } from '../theme';
 import { IconButton, tap } from './Button';
 import { Icon, type IconName } from './Icon';
+import { PressableScale } from './Motion';
 import { T } from './T';
+
+/** Where a divider starts in a group of rows with icon tiles: past the tile. */
+export const ROW_INSET = space(15);
 
 interface ScreenProps {
   children: ReactNode;
@@ -93,7 +96,7 @@ export function Divider({ inset = space(4) }: { inset?: number }) {
 export function SectionTitle({ children, action }: { children: string; action?: ReactNode }) {
   return (
     <View style={styles.sectionTitle}>
-      <T variant="label" muted>
+      <T variant="label" muted style={styles.sectionText}>
         {children}
       </T>
       {action}
@@ -101,8 +104,26 @@ export function SectionTitle({ children, action }: { children: string; action?: 
   );
 }
 
+/** A rounded tile with an icon (or a short glyph like "$") in a soft accent colour. */
+export function IconTile({ icon, glyph, tint = 'cobalt', size = 32 }: { icon?: IconName; glyph?: string; tint?: Tint; size?: number }) {
+  const p = usePalette();
+  const c = tintColors(p, tint);
+  return (
+    <View style={[styles.tile, { width: size, height: size, borderRadius: size * 0.31, backgroundColor: c.bg }]}>
+      {icon ? (
+        <Icon name={icon} size={size * 0.58} color={c.fg} />
+      ) : (
+        <T style={{ fontFamily: fonts.semibold, fontSize: size * 0.5, lineHeight: size * 0.62, color: c.fg }}>{glyph}</T>
+      )}
+    </View>
+  );
+}
+
 interface LineProps {
   icon?: IconName;
+  /** short text instead of an icon, e.g. "$" */
+  glyph?: string;
+  tint?: Tint;
   title: string;
   value?: string;
   hint?: string;
@@ -112,12 +133,13 @@ interface LineProps {
 }
 
 /** A settings-style row: icon, title, value or control on the right. */
-export function Line({ icon, title, value, hint, onPress, right, tone = 'default' }: LineProps) {
+export function Line({ icon, glyph, tint, title, value, hint, onPress, right, tone = 'default' }: LineProps) {
   const p = usePalette();
   const color = tone === 'danger' ? p.red : tone === 'accent' ? p.cobalt : p.ink;
+  const tileTint: Tint = tint ?? (tone === 'danger' ? 'red' : 'cobalt');
   const inner = (
     <View style={styles.line}>
-      {icon && <Icon name={icon} size={20} color={tone === 'default' ? p.inkSoft : color} />}
+      {(icon || glyph) && <IconTile icon={icon} glyph={glyph} tint={tileTint} />}
       <View style={styles.flex}>
         <T variant="body" color={color}>
           {title}
@@ -139,24 +161,25 @@ export function Line({ icon, title, value, hint, onPress, right, tone = 'default
   );
   if (!onPress) return inner;
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
+      to={0.985}
       onPress={() => {
         tap();
         onPress();
       }}
-      style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
     >
       {inner}
-    </Pressable>
+    </PressableScale>
   );
 }
 
 export function ProBadge() {
   const p = usePalette();
   return (
-    <View style={[styles.pro, { backgroundColor: p.cobaltSoft }]}>
-      <T variant="caption" color={p.cobalt} style={styles.proText}>
+    <View style={[styles.pro, { backgroundColor: p.violetSoft }]}>
+      <Icon name="sparkle" size={11} color={p.violet} strokeWidth={2.4} />
+      <T variant="caption" color={p.violet} style={styles.proText}>
         Pro
       </T>
     </View>
@@ -185,6 +208,8 @@ const styles = StyleSheet.create({
     marginTop: space(4),
     paddingHorizontal: space(1),
   },
+  sectionText: { fontFamily: fonts.semibold },
+  tile: { alignItems: 'center', justifyContent: 'center' },
   line: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -193,6 +218,6 @@ const styles = StyleSheet.create({
     minHeight: 56,
     paddingVertical: space(3),
   },
-  pro: { borderRadius: 8, paddingHorizontal: 7, paddingVertical: 1 },
-  proText: { fontFamily: 'Onest_600SemiBold' },
+  pro: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },
+  proText: { fontFamily: fonts.semibold, fontSize: 12, lineHeight: 15 },
 });

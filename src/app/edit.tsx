@@ -5,17 +5,19 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Button, tap } from '../components/Button';
 import { CalendarPicker } from '../components/CalendarPicker';
 import { Icon } from '../components/Icon';
-import { Divider, Group, Header, Line, ProBadge, Screen } from '../components/Layout';
+import { Divider, Group, Header, IconTile, Line, ProBadge, ROW_INSET, Screen } from '../components/Layout';
 import { Monogram } from '../components/Monogram';
+import { FadeIn, PressableScale } from '../components/Motion';
 import { Segmented } from '../components/Segmented';
 import { T } from '../components/T';
 import { Toggle } from '../components/Toggle';
 import { feedback } from '../lib/feedback';
 import { colorForName, findService } from '../lib/catalog';
 import { formatDate, plural, relativeDay, todayISO } from '../lib/dates';
-import { formatUAH, parseAmount, toUAH } from '../lib/money';
+import { formatUAH, parseAmount, perMonth, perYear, toUAH } from '../lib/money';
 import { ensurePermission } from '../lib/notifications';
 import { RATE_SOURCE_LABEL } from '../lib/rates';
+import { toast } from '../lib/toast';
 import type { Currency, Cycle } from '../lib/types';
 import { useStore } from '../store';
 import { fonts, noWebOutline, radius, space, usePalette } from '../theme';
@@ -46,6 +48,8 @@ export default function Edit() {
   const valid = name.trim().length > 0 && amount > 0;
   const color = existing?.color ?? service?.color ?? colorForName(name || '?');
   const uah = toUAH(amount, currency, rates);
+  const perYearUAH = toUAH(perYear({ amount, cycle }), currency, rates);
+  const perMonthUAH = toUAH(perMonth({ amount, cycle }), currency, rates);
 
   const save = async () => {
     const data = {
@@ -63,8 +67,13 @@ export default function Edit() {
       router.back();
     } else {
       add({ ...data, serviceId: service?.id, source: 'manual' });
-      if (remind) await ensurePermission().catch(() => false);
       router.dismissTo('/');
+      toast({
+        title: `${data.name} у списку`,
+        text: remind ? `Нагадаю ${leadDays === 1 ? 'за день' : `за ${leadDays} ${plural(leadDays, ['день', 'дні', 'днів'])}`} до списання.` : 'Без нагадувань, як скажете.',
+        tone: 'success',
+      });
+      if (remind) await ensurePermission().catch(() => false);
     }
   };
 
@@ -83,8 +92,8 @@ export default function Edit() {
       header={<Header title={existing ? 'Редагувати' : 'Нова підписка'} onBack={() => router.back()} />}
       footer={<Button title="Зберегти" onPress={save} disabled={!valid} sound={false} />}
     >
-      <View style={styles.identity}>
-        <Monogram name={name || '?'} color={color} size={56} />
+      <FadeIn style={styles.identity}>
+        <Monogram name={name || '?'} color={color} size={60} />
         {service ? (
           <T variant="title" style={styles.flex}>
             {name}
@@ -100,7 +109,7 @@ export default function Edit() {
             accessibilityLabel="Назва сервісу"
           />
         )}
-      </View>
+      </FadeIn>
 
       <Group style={styles.pad}>
         <T variant="label" muted>
@@ -111,7 +120,7 @@ export default function Edit() {
             value={amountText}
             onChangeText={(t) => setAmountText(t.replace(/[^0-9.,]/g, ''))}
             placeholder="0"
-            placeholderTextColor={p.line}
+            placeholderTextColor={p.muted}
             keyboardType="decimal-pad"
             autoFocus={Boolean(service) && !existing}
             style={[styles.amountInput, noWebOutline, { color: p.ink }]}
@@ -130,10 +139,15 @@ export default function Edit() {
             { value: 'EUR', label: 'Євро' },
           ]}
         />
-        {currency !== 'UAH' && amount > 0 && (
-          <T variant="caption" muted>
-            Це приблизно {formatUAH(uah)} {RATE_SOURCE_LABEL[rates.source]}
-          </T>
+        {amount > 0 && (
+          <FadeIn from={4} key={`${currency}-${cycle}`}>
+            <T variant="caption" muted>
+              {currency !== 'UAH' ? `Приблизно ${formatUAH(uah)} ${RATE_SOURCE_LABEL[rates.source]}. ` : ''}
+              {cycle === 'month'
+                ? `За рік набіжить ${formatUAH(perYearUAH)}.`
+                : `Це ${formatUAH(perMonthUAH)} на місяць.`}
+            </T>
+          </FadeIn>
         )}
       </Group>
 
@@ -162,7 +176,7 @@ export default function Edit() {
           }}
         >
           <View style={styles.dateRow}>
-            <Icon name="calendar" size={20} color={p.inkSoft} />
+            <IconTile icon="calendar" />
             <View style={styles.flex}>
               <T variant="body">Наступне списання</T>
               <T variant="caption" muted>
@@ -198,9 +212,10 @@ export default function Edit() {
             <Toggle value={remind} onChange={setRemind} label={remindLabel} />
           }
         />
-        <Divider inset={space(12)} />
+        <Divider inset={ROW_INSET} />
         <Line
           icon="users"
+          tint="amber"
           title="Платимо разом"
           hint={
             sharedWith > 1
@@ -226,25 +241,24 @@ export default function Edit() {
 function StepButton({ icon, onPress, disabled }: { icon: 'plus' | 'minus'; onPress: () => void; disabled?: boolean }) {
   const p = usePalette();
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={icon === 'plus' ? 'Більше людей' : 'Менше людей'}
+      accessibilityState={{ disabled: Boolean(disabled) }}
       disabled={disabled}
+      to={0.85}
       onPress={() => {
         tap();
         onPress();
       }}
-      style={({ pressed }) => [
-        styles.step,
-        { backgroundColor: p.track, opacity: disabled ? 0.35 : pressed ? 0.6 : 1 },
-      ]}
+      style={[styles.step, { backgroundColor: p.track, opacity: disabled ? 0.35 : 1 }]}
     >
       {icon === 'plus' ? (
         <Icon name="plus" size={18} color={p.ink} />
       ) : (
         <View style={[styles.minus, { backgroundColor: p.ink }]} />
       )}
-    </Pressable>
+    </PressableScale>
   );
 }
 

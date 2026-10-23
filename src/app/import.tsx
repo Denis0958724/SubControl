@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, tap } from '../components/Button';
 import { Icon } from '../components/Icon';
-import { Divider, Group, Header, Screen, SectionTitle } from '../components/Layout';
+import { Divider, Group, Header, IconTile, Screen, SectionTitle } from '../components/Layout';
 import { Monogram } from '../components/Monogram';
+import { FadeIn, PressableScale, stagger, useReducedMotion } from '../components/Motion';
 import { T } from '../components/T';
 import { BANKS, findBank, type BankId } from '../lib/banks';
 import { colorForName, findService } from '../lib/catalog';
@@ -19,6 +20,7 @@ import { openExternal } from '../lib/open';
 import { pickStatements } from '../lib/pickStatement';
 import { loadToken, saveToken } from '../lib/secure';
 import type { Rates } from '../lib/types';
+import { toast } from '../lib/toast';
 import { useStore } from '../store';
 import { fonts, noWebOutline, radius, space, usePalette } from '../theme';
 
@@ -140,6 +142,7 @@ export default function Import() {
 
   const importSelected = () => {
     feedback('success');
+    const n = selected.size;
     for (const c of found) {
       if (!selected.has(c.key)) continue;
       const service = findService(c.serviceId);
@@ -157,6 +160,11 @@ export default function Import() {
       });
     }
     router.dismissTo('/');
+    toast({
+      title: `Додано ${n} ${plural(n, ['підписку', 'підписки', 'підписок'])}`,
+      text: 'Тепер видно, куди йдуть гроші.',
+      tone: 'success',
+    });
     ensurePermission().catch(() => false);
   };
 
@@ -181,7 +189,10 @@ export default function Import() {
           />
         }
       >
-        <T variant="title">Шукаю підписки</T>
+        <Searching />
+        <T variant="title" center>
+          Шукаю підписки
+        </T>
         {source === 'monobank' && (
           <T variant="body" muted>
             monobank віддає виписку по місяцю і не частіше разу на хвилину. Тож це займе близько {PERIODS - 1}{' '}
@@ -249,7 +260,7 @@ export default function Import() {
             </T>
             <Group>
               {found.map((c, i) => (
-                <View key={c.key}>
+                <FadeIn key={c.key} delay={stagger(i)}>
                   {i > 0 && <Divider inset={space(17)} />}
                   <Pressable
                     accessibilityRole="checkbox"
@@ -266,7 +277,7 @@ export default function Import() {
                       note={already(c) ? 'вже у списку' : undefined}
                     />
                   </Pressable>
-                </View>
+                </FadeIn>
               ))}
             </Group>
           </>
@@ -375,15 +386,16 @@ export default function Import() {
         {BANKS.map((bk, i) => (
           <View key={bk.id}>
             {i > 0 && <Divider inset={space(17)} />}
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
+              to={0.98}
               onPress={() => {
                 tap();
                 openBank(bk.id);
               }}
-              style={({ pressed }) => [styles.bankRow, { opacity: pressed ? 0.6 : 1 }]}
+              style={styles.bankRow}
             >
-              <Monogram name={bk.name} color={bk.color} />
+              <Monogram name={bk.name} color={bk.color} size={44} />
               <View style={styles.flex}>
                 <T variant="heading" style={{ fontSize: 16 }}>
                   {bk.name}
@@ -393,7 +405,7 @@ export default function Import() {
                 </T>
               </View>
               <Icon name="chevronRight" size={18} color={p.muted} />
-            </Pressable>
+            </PressableScale>
           </View>
         ))}
       </Group>
@@ -405,12 +417,41 @@ export default function Import() {
   );
 }
 
+/** A magnifier with slow ripples while the statement is being read. */
+function Searching() {
+  const p = usePalette();
+  const reduce = useReducedMotion();
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduce) return;
+    const loop = Animated.loop(Animated.timing(v, { toValue: 1, duration: 1800, easing: Easing.out(Easing.quad), useNativeDriver: true }));
+    loop.start();
+    return () => loop.stop();
+  }, [v, reduce]);
+  const ring = (offset: number) => {
+    const t = Animated.modulo(Animated.add(v, offset), 1);
+    return {
+      opacity: t.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0] }),
+      transform: [{ scale: t.interpolate({ inputRange: [0, 1], outputRange: [1, 2.2] }) }],
+    };
+  };
+  return (
+    <View style={styles.searching} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {!reduce && <Animated.View style={[styles.ripple, { backgroundColor: p.cobaltSoft }, ring(0)]} />}
+      {!reduce && <Animated.View style={[styles.ripple, { backgroundColor: p.cobaltSoft }, ring(0.5)]} />}
+      <View style={[styles.lens, { backgroundColor: p.cobalt }]}>
+        <Icon name="search" size={30} color={p.onCobalt} strokeWidth={2.4} />
+      </View>
+    </View>
+  );
+}
+
 function Step({ n, text, children }: { n: number; text: string; children?: React.ReactNode }) {
   const p = usePalette();
   return (
     <View style={styles.step}>
-      <View style={[styles.num, { backgroundColor: p.cobaltSoft }]}>
-        <T variant="label" color={p.cobalt} style={{ fontFamily: fonts.semibold }}>
+      <View style={[styles.num, { backgroundColor: p.cobalt }]}>
+        <T variant="label" color={p.onCobalt} style={{ fontFamily: fonts.semibold }}>
           {n}
         </T>
       </View>
@@ -425,9 +466,9 @@ function Step({ n, text, children }: { n: number; text: string; children?: React
 function Privacy({ text }: { text: string }) {
   const p = usePalette();
   return (
-    <View style={styles.privacy}>
-      <Icon name="shield" size={20} color={p.green} />
-      <T variant="caption" muted style={styles.flex}>
+    <View style={[styles.privacy, { backgroundColor: p.greenSoft }]}>
+      <IconTile icon="shield" tint="green" />
+      <T variant="caption" color={p.inkSoft} style={styles.flex}>
         {text}
       </T>
     </View>
@@ -458,12 +499,12 @@ function CandidateRow({ c, rates, checked, note }: { c: Candidate; rates: Rates;
     <View style={styles.cRow}>
       {checked !== undefined && (
         <View
-          style={[styles.check, checked ? { backgroundColor: p.cobalt, borderColor: p.cobalt } : { borderColor: p.line }]}
+          style={[styles.check, checked ? { backgroundColor: p.cobalt, borderColor: p.cobalt } : { borderColor: p.muted }]}
         >
           {checked && <Icon name="check" size={16} color={p.onCobalt} strokeWidth={2.6} />}
         </View>
       )}
-      <Monogram name={c.name} color={color} />
+      <Monogram name={c.name} color={color} size={42} />
       <View style={styles.flex}>
         <T variant="heading" numberOfLines={1} style={{ fontSize: 16 }}>
           {c.name}
@@ -501,8 +542,11 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   tip: { paddingHorizontal: space(1) },
-  privacy: { flexDirection: 'row', gap: space(3), paddingHorizontal: space(1), marginTop: space(2) },
+  privacy: { flexDirection: 'row', alignItems: 'center', gap: space(3), padding: space(3), borderRadius: radius.card, marginTop: space(2) },
   bars: { flexDirection: 'row', gap: space(2), marginTop: space(3) },
+  searching: { alignSelf: 'center', width: 140, height: 140, alignItems: 'center', justifyContent: 'center', marginTop: space(4) },
+  ripple: { position: 'absolute', width: 72, height: 72, borderRadius: 36 },
+  lens: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
   bar: { flex: 1, height: 8, borderRadius: 4 },
   error: { borderRadius: 16, padding: space(4) },
   bankRow: {

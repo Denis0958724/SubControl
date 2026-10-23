@@ -7,6 +7,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { AppState, Platform, useColorScheme } from 'react-native';
 
+import { Confetti } from '../components/Confetti';
+import { Toaster } from '../components/Toaster';
 import { preloadSounds } from '../lib/feedback';
 import { syncGlance } from '../lib/glance';
 import { ACTION_CANCEL, ACTION_KEEP, clearBadge, rescheduleAll, setupNotifications } from '../lib/notifications';
@@ -126,6 +128,8 @@ export default function RootLayout() {
         <Stack.Screen name="add" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="pro" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       </Stack>
+      <Confetti />
+      <Toaster />
     </>
   );
 }

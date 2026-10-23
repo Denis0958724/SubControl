@@ -3,7 +3,8 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 export type IconName =
   | 'plus' | 'close' | 'chevronRight' | 'chevronLeft' | 'arrowLeft' | 'sliders' | 'bell'
   | 'check' | 'external' | 'search' | 'bolt' | 'users' | 'trash' | 'lock' | 'calendar'
-  | 'card' | 'star' | 'refresh' | 'shield' | 'edit' | 'download' | 'file' | 'sound';
+  | 'card' | 'star' | 'refresh' | 'shield' | 'edit' | 'download' | 'file' | 'sound'
+  | 'island' | 'clock' | 'help' | 'doc' | 'sparkle' | 'undo' | 'wallet' | 'repeat';
 
 interface Props {
   name: IconName;
@@ -12,7 +13,7 @@ interface Props {
   strokeWidth?: number;
 }
 
-/** A small hand-drawn icon set — no icon fonts to load, crisp at any size. */
+/** A small hand-drawn icon set. No icon fonts to load, crisp at any size. */
 export function Icon({ name, size = 22, color, strokeWidth = 2 }: Props) {
   const common = {
     stroke: color,
@@ -105,6 +106,42 @@ function render(name: IconName, c: Record<string, unknown>) {
       return <Path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" {...c} />;
     case 'sound':
       return <Path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4v-5zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" {...c} />;
+    case 'island':
+      return (
+        <>
+          <Rect x={5} y={3} width={14} height={18} rx={3.5} {...c} />
+          <Rect x={8.5} y={5.5} width={7} height={2.5} rx={1.25} {...c} />
+        </>
+      );
+    case 'clock':
+      return (
+        <>
+          <Circle cx={12} cy={12} r={8} {...c} />
+          <Path d="M12 7.5V12l3 2" {...c} />
+        </>
+      );
+    case 'help':
+      return (
+        <>
+          <Circle cx={12} cy={12} r={8.5} {...c} />
+          <Path d="M9.6 9.6a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4M12 16.8v.2" {...c} />
+        </>
+      );
+    case 'doc':
+      return <Path d="M12 3l7 3v5.5c0 4.3-3 7.8-7 9.5-4-1.7-7-5.2-7-9.5V6l7-3zM9 12l2 2 4-4" {...c} />;
+    case 'sparkle':
+      return <Path d="M12 3c.6 4.4 2.6 6.4 7 7-4.4.6-6.4 2.6-7 7-.6-4.4-2.6-6.4-7-7 4.4-.6 6.4-2.6 7-7zM19 16c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z" {...c} />;
+    case 'undo':
+      return <Path d="M9 7L5 11l4 4M5 11h9a5 5 0 0 1 0 10h-2" {...c} />;
+    case 'wallet':
+      return (
+        <>
+          <Path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H17v3M4 7.5V17a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H6.5A2.5 2.5 0 0 1 4 7.5z" {...c} />
+          <Circle cx={16} cy={13.5} r={1} {...c} />
+        </>
+      );
+    case 'repeat':
+      return <Path d="M4 11V9a3 3 0 0 1 3-3h12M16 3l3 3-3 3M20 13v2a3 3 0 0 1-3 3H5M8 21l-3-3 3-3" {...c} />;
     case 'file':
       return <Path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v5h5M9.5 13h5M9.5 17h5" {...c} />;
   }

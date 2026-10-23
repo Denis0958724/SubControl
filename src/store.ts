@@ -28,6 +28,8 @@ interface State {
   add: (sub: NewSubscription) => string;
   update: (id: string, patch: Partial<Subscription>) => void;
   remove: (id: string) => void;
+  /** puts a removed subscription back where it was (undo) */
+  putBack: (sub: Subscription, index: number) => void;
   cancel: (id: string) => void;
   restore: (id: string) => void;
   setSettings: (patch: Partial<Settings>) => void;
@@ -80,6 +82,12 @@ export const useStore = create<State>()(
         }),
 
       remove: (id) => set({ subs: get().subs.filter((s) => s.id !== id) }),
+
+      putBack: (sub, index) => {
+        const subs = get().subs.filter((s) => s.id !== sub.id);
+        subs.splice(Math.min(Math.max(index, 0), subs.length), 0, sub);
+        set({ subs });
+      },
 
       cancel: (id) =>
         set({

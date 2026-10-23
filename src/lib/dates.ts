@@ -44,6 +44,33 @@ export function addCycle(iso: ISODate, cycle: Cycle, anchorDay?: number): ISODat
   return toISO(new Date(y, m, Math.min(anchor, daysInMonth(y, m))));
 }
 
+/** The charge before this one: one billing cycle back, keeping the anchor day when the month allows it. */
+export function previousCharge(iso: ISODate, cycle: Cycle, anchorDay?: number): ISODate {
+  if (cycle === 'week') return addDays(iso, -7);
+  const d = fromISO(iso);
+  const anchor = anchorDay ?? d.getDate();
+  let y = d.getFullYear();
+  let m = d.getMonth();
+  if (cycle === 'month') {
+    m -= 1;
+    if (m < 0) {
+      m = 11;
+      y -= 1;
+    }
+  } else {
+    y -= 1;
+  }
+  return toISO(new Date(y, m, Math.min(anchor, daysInMonth(y, m))));
+}
+
+/** How far through the current billing period today is, 0..1. */
+export function cycleProgress(nextCharge: ISODate, cycle: Cycle, anchorDay: number, today: ISODate): number {
+  const prev = previousCharge(nextCharge, cycle, anchorDay);
+  const total = diffDays(prev, nextCharge);
+  if (total <= 0) return 0;
+  return Math.min(1, Math.max(0, diffDays(prev, today) / total));
+}
+
 /** Rolls a past charge date forward until it is today or later. */
 export function rollForward(iso: ISODate, cycle: Cycle, anchorDay: number, today: ISODate): ISODate {
   let next = iso;
