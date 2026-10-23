@@ -69,8 +69,7 @@ export default function Edit() {
       add({ ...data, serviceId: service?.id, source: 'manual' });
       router.dismissTo('/');
       toast({
-        title: `${data.name} у списку`,
-        text: remind ? `Нагадаю ${leadDays === 1 ? 'за день' : `за ${leadDays} ${plural(leadDays, ['день', 'дні', 'днів'])}`} до списання.` : 'Без нагадувань, як скажете.',
+        title: `${data.name} додано`,
         tone: 'success',
       });
       if (remind) await ensurePermission().catch(() => false);
@@ -142,10 +141,10 @@ export default function Edit() {
         {amount > 0 && (
           <FadeIn from={4} key={`${currency}-${cycle}`}>
             <T variant="caption" muted>
-              {currency !== 'UAH' ? `Приблизно ${formatUAH(uah)} ${RATE_SOURCE_LABEL[rates.source]}. ` : ''}
+              {currency !== 'UAH' ? `≈ ${formatUAH(uah)} ${RATE_SOURCE_LABEL[rates.source]}. ` : ''}
               {cycle === 'month'
-                ? `За рік набіжить ${formatUAH(perYearUAH)}.`
-                : `Це ${formatUAH(perMonthUAH)} на місяць.`}
+                ? `${formatUAH(perYearUAH)} на рік`
+                : `${formatUAH(perMonthUAH)} на місяць`}
             </T>
           </FadeIn>
         )}
@@ -207,7 +206,6 @@ export default function Edit() {
         <Line
           icon="bell"
           title={remindLabel}
-          hint="Спитаю: продовжуєте чи скасувати"
           right={
             <Toggle value={remind} onChange={setRemind} label={remindLabel} />
           }
@@ -220,7 +218,7 @@ export default function Edit() {
           hint={
             sharedWith > 1
               ? `З кожного ${formatUAH(uah / sharedWith)}`
-              : 'Якщо ділите підписку з родиною чи друзями'
+              : 'Якщо ділите з кимось'
           }
           right={
             <View style={styles.stepper}>

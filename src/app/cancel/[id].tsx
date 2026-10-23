@@ -58,7 +58,7 @@ export default function CancelGuide() {
     cancel(sub.id);
     feedback('success');
     celebrate();
-    toast({ title: `Мінус ${formatUAH(yearly)} на рік`, text: `${sub.name} більше не рахуємо. Так і треба.`, tone: 'saved' });
+    toast({ title: `Мінус ${formatUAH(yearly)} на рік`, tone: 'saved' });
     router.dismissTo('/');
   };
 
@@ -82,14 +82,14 @@ export default function CancelGuide() {
           <IconTile icon="wallet" tint="green" size={40} />
           <View style={styles.flex}>
             <T variant="caption" color={p.green} style={styles.winLabel}>
-              Встигнете до списання, і за рік залишиться
+              Економія за рік
             </T>
             <T style={[styles.winValue, { color: p.green }]}>{formatUAH(yearly)}</T>
           </View>
         </View>
       </FadeIn>
 
-      <SectionTitle>Як це зробити</SectionTitle>
+      <SectionTitle>Кроки</SectionTitle>
       <Group style={styles.steps}>
         {steps.map((step, i) => (
           <FadeIn key={step} delay={stagger(i, 70) + 140} style={styles.step}>
@@ -117,7 +117,7 @@ export default function CancelGuide() {
         )}
       </Group>
 
-      <SectionTitle>Платите через телефон?</SectionTitle>
+      <SectionTitle>Якщо платите через телефон</SectionTitle>
       <Group>
         {stores.map((s, i) => (
           <View key={s.url}>
@@ -131,11 +131,10 @@ export default function CancelGuide() {
         <IconTile icon="shield" tint="amber" size={36} />
         <View style={styles.flex}>
           <T variant="heading" style={styles.tipTitle}>
-            Сервіс не відпускає?
+            Не виходить скасувати?
           </T>
           <T variant="body" color={p.inkSoft}>
-            Напишіть у підтримку свого банку. Там можуть зупинити регулярні списання цього продавця або допомогти
-            повернути гроші, якщо їх списали вже після скасування.
+            Напишіть у підтримку банку. Там можуть зупинити списання або допомогти повернути гроші.
           </T>
         </View>
       </View>

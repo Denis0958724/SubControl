@@ -61,7 +61,7 @@ export default function SettingsScreen() {
     }
     const next = subs.filter((x) => x.status === 'active').sort((a, b) => a.nextCharge.localeCompare(b.nextCharge))[0];
     await sendTestReminder(next, settings, rates);
-    inform('Чекайте 5 секунд', 'Можна заблокувати екран: так видно, як нагадування виглядає насправді.');
+    inform('Чекайте 5 секунд', 'Можна заблокувати екран.');
   };
 
   const setLead = (leadDays: Settings['leadDays']) => {
@@ -165,7 +165,7 @@ export default function SettingsScreen() {
               icon="bell"
               tone="danger"
               title="Сповіщення вимкнені"
-              hint="Без них нагадування не прийдуть. Натисніть, щоб увімкнути"
+              hint="Натисніть, щоб увімкнути"
               onPress={enableNotifications}
             />
             <Divider inset={ROW_INSET} />
@@ -175,7 +175,6 @@ export default function SettingsScreen() {
           icon="calendar"
           tint="amber"
           title="Ще раз у день списання"
-          hint="Для тих, хто пропускає перше"
           right={<Toggle value={settings.dayOf} onChange={(dayOf) => setSettings({ dayOf })} label="Ще раз у день списання" />}
         />
         <Divider inset={ROW_INSET} />
@@ -184,7 +183,7 @@ export default function SettingsScreen() {
             icon="sound"
             tint="red"
             title="Чути навіть на беззвучному"
-            hint="Звучить як будильник. Вимкніть, якщо заважає"
+            hint="Як будильник"
             right={<Toggle value={settings.loud} onChange={(loud) => setSettings({ loud })} label="Чути навіть на беззвучному" />}
           />
         ) : (
@@ -193,7 +192,7 @@ export default function SettingsScreen() {
               icon="island"
               tint="ink"
               title="Dynamic Island і екран блокування"
-              hint="Списання сьогодні чи завтра висить там, поки не вирішите"
+              hint="Списання сьогодні чи завтра"
               right={
                 <Toggle
                   value={settings.liveActivity}
@@ -201,13 +200,6 @@ export default function SettingsScreen() {
                   label="Dynamic Island і екран блокування"
                 />
               }
-            />
-            <Divider inset={ROW_INSET} />
-            <Line
-              icon="sound"
-              tint="red"
-              title="На беззвучному буде вібрація"
-              hint="Звук при вимкненому перемикачі Apple дає лише медичним застосункам. Зате нагадування пробʼється крізь режим фокусування"
             />
           </>
         )}
@@ -218,7 +210,7 @@ export default function SettingsScreen() {
               icon="clock"
               tone="accent"
               title="Нагадувати хвилина в хвилину"
-              hint="Дозвольте «Будильники й нагадування», інакше система може зсунути час заради батареї"
+              hint="Дозвольте «Будильники й нагадування»"
               onPress={async () => {
                 await askExactAlarms();
                 status.refresh();
@@ -236,7 +228,6 @@ export default function SettingsScreen() {
           icon="sound"
           tint="green"
           title="Звуки натискань"
-          hint="Тихі. І мовчать, коли телефон на беззвучному"
           right={<Toggle value={settings.sounds} onChange={(sounds) => setSettings({ sounds })} label="Звуки натискань" />}
         />
       </Group>
@@ -299,7 +290,6 @@ export default function SettingsScreen() {
           icon="trash"
           tone="danger"
           title="Видалити всі дані"
-          hint="Список і налаштування на цьому телефоні"
           onPress={async () => {
             if (!(await confirm('Видалити всі дані?', 'Список підписок і налаштування зникнуть з цього телефона. Назад не повернути.', 'Видалити', true))) return;
             await forgetToken();
@@ -323,7 +313,7 @@ export default function SettingsScreen() {
           SubControl {Constants.expoConfig?.version ?? ''}
         </T>
         <T variant="caption" muted center style={styles.aboutText}>
-          Підписки живуть тільки на цьому телефоні. До ваших грошей SubControl доступу не має і нічого не списує сам.
+          Дані зберігаються тільки на цьому телефоні.
         </T>
       </View>
     </Screen>
@@ -344,7 +334,7 @@ function ProCard({ isPro }: { isPro: boolean }) {
           {isPro ? 'Pro активний' : 'SubControl Pro'}
         </T>
         <T variant="caption" color="#FFFFFF" style={styles.proText}>
-          {isPro ? 'Дякуємо. Тепер можна все, і без обмежень.' : 'Автопошук у виписці, родинний розподіл, без обмежень'}
+          {isPro ? 'Дякуємо' : 'Автопошук, спільна оплата, без ліміту'}
         </T>
       </View>
       {!isPro && <Icon name="chevronRight" size={20} color="#FFFFFF" />}

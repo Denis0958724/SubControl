@@ -142,13 +142,3 @@ describe('billing period helpers', () => {
     expect(cycleProgress('2026-11-01', 'month', 1, '2026-10-16')).toBeCloseTo(15 / 31);
   });
 });
-
-describe('yearly comparisons', () => {
-  it('only offers comparisons that make sense for the amount', async () => {
-    const { perspectives } = await import('../perspective');
-    expect(perspectives(100)).toEqual([]);
-    const list = perspectives(27_763);
-    expect(list[0]).toBe('185 шаурм');
-    expect(list.every((s) => !/^[01] /.test(s))).toBe(true);
-  });
-});

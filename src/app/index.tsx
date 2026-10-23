@@ -14,7 +14,6 @@ import { T } from '../components/T';
 import { diffDays, todayISO } from '../lib/dates';
 import { chargeUAH, formatUAH, monthlyUAH, yearlyUAH } from '../lib/money';
 import { ensurePermission, openNotificationSettings } from '../lib/notifications';
-import { perspectives } from '../lib/perspective';
 import type { Rates, Subscription } from '../lib/types';
 import { useReminderStatus } from '../lib/useReminderStatus';
 import { activeSubs, canAddMore, useStore } from '../store';
@@ -88,8 +87,6 @@ export default function Home() {
         onPressSub={open}
       />
 
-      {yearly > 0 && <Perspective yearly={yearly} />}
-
       {reminders.permission !== 'granted' && active.some((x) => x.remind) && (
         <FadeIn delay={200}>
           <PressableScale
@@ -105,10 +102,10 @@ export default function Home() {
             <IconTile icon="bell" tint="amber" size={38} />
             <View style={styles.flex}>
               <T variant="heading" style={styles.alertTitle}>
-                Нагадування не прийдуть
+                Сповіщення вимкнені
               </T>
               <T variant="caption" color={p.inkSoft}>
-                Сповіщення для SubControl вимкнені. Натисніть, щоб увімкнути.
+                Натисніть, щоб увімкнути
               </T>
             </View>
             <Icon name="chevronRight" size={18} color={p.muted} />
@@ -145,9 +142,7 @@ export default function Home() {
                 Зекономлено {formatUAH(saved)} на рік
               </T>
               <T variant="caption" color={p.green}>
-                {showCancelled
-                  ? 'Сховати скасовані'
-                  : `Скасовано ${cancelled.length}. Показати`}
+                {showCancelled ? 'Сховати' : `Скасовано: ${cancelled.length}`}
               </T>
             </View>
             <Icon name={showCancelled ? 'close' : 'chevronRight'} size={18} color={p.green} />
@@ -205,37 +200,6 @@ function SubSection({ title, subs, rates, today, onOpen, from }: SubSectionProps
   );
 }
 
-/** "27 763 ₴ a year" in units people feel. Tap for the next comparison. */
-function Perspective({ yearly }: { yearly: number }) {
-  const p = usePalette();
-  const items = useMemo(() => perspectives(yearly), [yearly]);
-  const [i, setI] = useState(0);
-  if (!items.length) return null;
-  const text = items[i % items.length];
-  return (
-    <FadeIn delay={700} style={styles.perspectiveWrap}>
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={`За рік це як ${text}. Натисніть, щоб порівняти з іншим`}
-        to={0.95}
-        onPress={() => {
-          tap();
-          setI((v) => v + 1);
-        }}
-        style={[styles.perspective, { backgroundColor: p.cobaltSoft }]}
-      >
-        <T variant="label" color={p.cobalt}>
-          За рік це як{' '}
-          <T variant="label" color={p.cobalt} style={styles.perspectiveStrong}>
-            {text}
-          </T>
-        </T>
-        {items.length > 1 && <Icon name="repeat" size={15} color={p.cobalt} strokeWidth={2.2} />}
-      </PressableScale>
-    </FadeIn>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   top: {
@@ -267,14 +231,4 @@ const styles = StyleSheet.create({
   },
   savedTitle: { fontSize: 16 },
   sum: { fontVariant: ['tabular-nums'] },
-  perspectiveWrap: { alignItems: 'center' },
-  perspective: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(2),
-    borderRadius: radius.pill,
-    paddingHorizontal: space(4),
-    paddingVertical: space(2),
-  },
-  perspectiveStrong: { fontFamily: fonts.semibold },
 });

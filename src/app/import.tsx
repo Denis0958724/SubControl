@@ -162,7 +162,6 @@ export default function Import() {
     router.dismissTo('/');
     toast({
       title: `Додано ${n} ${plural(n, ['підписку', 'підписки', 'підписок'])}`,
-      text: 'Тепер видно, куди йдуть гроші.',
       tone: 'success',
     });
     ensurePermission().catch(() => false);
@@ -195,8 +194,7 @@ export default function Import() {
         </T>
         {source === 'monobank' && (
           <T variant="body" muted>
-            monobank віддає виписку по місяцю і не частіше разу на хвилину. Тож це займе близько {PERIODS - 1}{' '}
-            хвилин. Екран можна не закривати, але й дивитися на нього не обовʼязково.
+            Це займе близько {PERIODS - 1} хвилин: monobank віддає виписку по місяцю раз на хвилину.
           </T>
         )}
         <View style={styles.bars}>
@@ -250,13 +248,12 @@ export default function Import() {
         </T>
         {found.length === 0 ? (
           <T variant="body" muted>
-            Регулярних списань не знайшлося. Або підписок справді немає, або виписка коротка. Візьміть період від 2
-            місяців чи додайте підписки вручну.
+            Регулярних списань не знайшлося. Спробуйте виписку від 2 місяців.
           </T>
         ) : (
           <>
             <T variant="body" muted>
-              Позначені точно підписки. Решта схожа на регулярні платежі: перевірте й оберіть самі.
+              Позначене схоже на підписки. Перевірте й додайте.
             </T>
             <Group>
               {found.map((c, i) => (
@@ -301,7 +298,7 @@ export default function Import() {
       >
         <T variant="title">monobank</T>
         <T variant="body" muted>
-          SubControl сам завантажить виписку картки за 3 місяці. Для цього потрібен токен від monobank.
+          Завантажимо виписку за 3 місяці. Потрібен токен monobank.
         </T>
         {errors.map((e) => (
           <ErrorNote key={e} text={e} />
@@ -332,8 +329,8 @@ export default function Import() {
           </Step>
           <Step n={3} text={`Натисніть «Почати пошук». Це займе близько ${PERIODS - 1} хвилин`} />
         </Group>
-        <Privacy text="Токен дає лише переглядати виписку. Переказати з ним гроші неможливо. Зберігається тільки в захищеному сховищі телефона." />
-        <Button title="Не хочу токен, завантажу файл" kind="ghost" compact onPress={() => setPhase('file')} />
+        <Privacy text="Токен дає лише переглядати виписку. Зберігається тільки на телефоні." />
+        <Button title="Краще файлом" kind="ghost" compact onPress={() => setPhase('file')} />
       </Screen>
     );
   }
@@ -354,8 +351,7 @@ export default function Import() {
       >
         <T variant="title">{bank === 'other' ? 'Виписка з банку' : `Виписка ${b.name}`}</T>
         <T variant="body" muted>
-          Знайдемо регулярні списання у файлі виписки. Підійде Excel або CSV, можна кілька файлів одразу, якщо
-          карток кілька.
+          Підійде Excel або CSV. Можна кілька файлів.
         </T>
         {errors.map((e) => (
           <ErrorNote key={e} text={e} />
@@ -370,7 +366,7 @@ export default function Import() {
             {b.desktopTip}
           </T>
         )}
-        <Privacy text="Файл читається тільки на телефоні. Нікуди не відправляємо й не зберігаємо, лише знайдені підписки." />
+        <Privacy text="Файл читається тільки на телефоні." />
       </Screen>
     );
   }
@@ -379,8 +375,7 @@ export default function Import() {
     <Screen header={<Header onBack={() => router.back()} />}>
       <T variant="title">Знайти підписки автоматично</T>
       <T variant="body" muted>
-        Оберіть банк, з якого платите за підписки. SubControl перегляне витрати за 3 місяці й покаже, що
-        повторюється.
+        Оберіть банк. Перевіримо витрати за 3 місяці.
       </T>
       <Group>
         {BANKS.map((bk, i) => (
@@ -410,8 +405,7 @@ export default function Import() {
         ))}
       </Group>
       <T variant="caption" muted style={styles.tip}>
-        Чому не напряму з Приват24 чи іншого банку? Банки відкривають доступ до виписки тільки застосункам з
-        дозволом НБУ. Поки такого дозволу немає, файл виписки працює з будь-яким банком.
+        Інші банки не дають прямого доступу, тому через файл виписки.
       </T>
     </Screen>
   );

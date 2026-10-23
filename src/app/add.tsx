@@ -56,7 +56,7 @@ export default function Add() {
               icon="bolt"
               tint="violet"
               title="Знайти у виписці банку"
-              hint="Хай SubControl сам пошукає, що списується щомісяця"
+              hint="monobank, ПриватБанк та інші"
               right={isPro ? <Icon name="chevronRight" size={18} color={p.muted} /> : <ProBadge />}
               onPress={() => router.push('/import')}
             />
@@ -64,7 +64,7 @@ export default function Add() {
         </FadeIn>
       )}
 
-      <SectionTitle>{query ? (services.length ? 'Знайдено' : 'Такого сервісу ще не знаю') : 'Популярні в Україні'}</SectionTitle>
+      <SectionTitle>{query ? (services.length ? 'Знайдено' : 'Не знайдено') : 'Популярні в Україні'}</SectionTitle>
       <View style={styles.grid}>
         <Tile label={query ? `Додати «${query.trim()}»` : 'Свій сервіс'} onPress={() => pick()}>
           <View style={[styles.customBadge, { borderColor: p.cobalt }]}>

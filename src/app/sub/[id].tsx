@@ -60,8 +60,8 @@ export default function SubscriptionScreen() {
     router.back();
     remove(sub.id);
     toast({
-      title: `${copy.name} прибрано зі списку`,
-      text: 'У самому сервісі підписка не скасувалась.',
+      title: `${copy.name} прибрано`,
+      text: 'У сервісі вона ще активна',
       icon: 'trash',
       action: { label: 'Повернути', run: () => putBack(copy, index) },
     });
@@ -123,13 +123,10 @@ export default function SubscriptionScreen() {
             </T>
             {answered ? (
               <T variant="caption" color={p.inkSoft}>
-                Ви вирішили продовжити. Наступне нагадування буде перед наступним списанням.
+                Продовжуєте. Нагадаю перед наступним списанням.
               </T>
             ) : (
               <>
-                <T variant="caption" color={p.inkSoft}>
-                  Ще користуєтесь? Якщо ні, скасуйте зараз, поки гроші на місці.
-                </T>
                 <View style={styles.decideRow}>
                   <Button
                     title="Продовжую"
@@ -139,7 +136,7 @@ export default function SubscriptionScreen() {
                     style={styles.flex}
                     onPress={() => {
                       acknowledge(sub.id);
-                      toast({ title: 'Домовились', text: 'До наступного списання більше не нагадую.', tone: 'success' });
+                      toast({ title: 'Нагадаю перед наступним списанням', tone: 'success' });
                     }}
                   />
                   <Button
@@ -178,7 +175,7 @@ export default function SubscriptionScreen() {
             <Line
               icon="bell"
               title="Нагадування"
-              hint={sub.remind ? remindHint : 'Вимкнено. Списання буде сюрпризом'}
+              hint={sub.remind ? remindHint : 'Вимкнено'}
               right={
                 <Toggle
                   value={sub.remind}
@@ -201,9 +198,6 @@ export default function SubscriptionScreen() {
               Економія
             </T>
             <T style={[styles.savedValue, { color: p.green }]}>{formatUAH(yearlyUAH(sub, rates))} на рік</T>
-            <T variant="caption" color={p.inkSoft}>
-              Більше не рахуємо в сумі й не нагадуємо.
-            </T>
           </View>
         </FadeIn>
       )}
@@ -217,7 +211,7 @@ export default function SubscriptionScreen() {
             sound="success"
             onPress={() => {
               restore(sub.id);
-              toast({ title: `${sub.name} знову в списку`, text: 'Нагадування теж повернулися.', tone: 'success' });
+              toast({ title: `${sub.name} знову в списку`, tone: 'success' });
             }}
           />
         ) : (

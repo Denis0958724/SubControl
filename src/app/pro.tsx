@@ -9,7 +9,7 @@ import { FadeIn, PressableScale, stagger, useReducedMotion } from '../components
 import { T } from '../components/T';
 import { inform } from '../lib/confirm';
 import { feedback } from '../lib/feedback';
-import { IN_STORE, STORE_NAME, TERMS_URL } from '../lib/links';
+import { STORE_NAME, TERMS_URL } from '../lib/links';
 import { openExternal } from '../lib/open';
 import { plural } from '../lib/dates';
 import {
@@ -26,11 +26,11 @@ import { FREE_LIMIT, useStore } from '../store';
 import { fonts, radius, space, usePalette, type Tint } from '../theme';
 
 const FEATURES: { icon: IconName; tint: Tint; title: string; text: string }[] = [
-  { icon: 'bolt', tint: 'violet', title: 'Автопошук підписок', text: 'Знайде забуте у виписці monobank, ПриватБанку та інших' },
-  { icon: 'users', tint: 'amber', title: 'Платимо разом', text: 'Скільки з кожного, якщо ділите підписку з родиною' },
-  { icon: 'bell', tint: 'cobalt', title: 'Нагадування за 3 дні або тиждень', text: 'Більше часу, щоб передумати' },
-  { icon: 'card', tint: 'green', title: 'Скільки завгодно підписок', text: `Безкоштовно до ${FREE_LIMIT}. Далі без ліміту` },
-  { icon: 'download', tint: 'ink', title: 'Таблиця для Excel', text: 'Для сімейного бюджету чи Google Таблиць' },
+  { icon: 'bolt', tint: 'violet', title: 'Автопошук підписок', text: 'У виписці monobank, ПриватБанку та інших' },
+  { icon: 'users', tint: 'amber', title: 'Платимо разом', text: 'Скільки з кожного' },
+  { icon: 'bell', tint: 'cobalt', title: 'Нагадування за 3 дні або тиждень', text: '' },
+  { icon: 'card', tint: 'green', title: 'Без ліміту підписок', text: `Безкоштовно до ${FREE_LIMIT}` },
+  { icon: 'download', tint: 'ink', title: 'Таблиця для Excel', text: '' },
 ];
 
 const months = (n: number) => `${n} ${plural(n, ['місяць', 'місяці', 'місяців'])}`;
@@ -119,7 +119,7 @@ export default function Pro() {
       {reason === 'limit' && (
         <View style={[styles.note, { backgroundColor: p.amberSoft }]}>
           <T variant="label" color={p.ink}>
-            Безкоштовно влазить {FREE_LIMIT} підписок. У вас уже стільки є. Чесно, це немало.
+            Безкоштовно можна вести до {FREE_LIMIT} підписок.
           </T>
         </View>
       )}
@@ -130,9 +130,6 @@ export default function Pro() {
           <Sparkle />
           <T variant="title" color="#FFFFFF">
             SubControl Pro
-          </T>
-          <T variant="body" color="#FFFFFF" style={styles.heroText}>
-            Коштує менше, ніж одна забута підписка.
           </T>
         </View>
       </FadeIn>
@@ -174,22 +171,23 @@ export default function Pro() {
               <T variant="heading" style={{ fontSize: 16 }}>
                 {f.title}
               </T>
-              <T variant="caption" muted>
-                {f.text}
-              </T>
+              {f.text !== '' && (
+                <T variant="caption" muted>
+                  {f.text}
+                </T>
+              )}
             </View>
           </FadeIn>
         ))}
       </View>
 
       <T variant="caption" muted style={styles.legal}>
-        Без Pro теж нормально і назавжди безкоштовно: список підписок, суми в гривнях, нагадування за день та
-        інструкції, як скасувати.
+        Безкоштовно назавжди: список, суми в гривнях, нагадування за день, інструкції скасування.
       </T>
       {!isPro && plan && (
         <T variant="caption" muted style={styles.legalTight}>
           {terms} Підписка продовжується сама, поки ви її не скасуєте. Скасувати можна будь-коли в налаштуваннях{' '}
-          {STORE_NAME}, щонайменше за добу до кінця періоду. Оплата пройде {IN_STORE}.
+          {STORE_NAME}, щонайменше за добу до кінця періоду.
         </T>
       )}
       <View style={styles.links}>
@@ -291,7 +289,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     elevation: 6,
   },
-  heroText: { opacity: 0.88 },
   sparkle: { position: 'absolute', right: space(5), top: space(5) },
   loading: { height: 160, alignItems: 'center', justifyContent: 'center' },
   plans: { gap: space(3) },

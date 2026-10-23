@@ -27,16 +27,16 @@ export function EmptyHome({ onAdd, onQuick, onImport }: Props) {
       <Orbit />
       <FadeIn delay={150} style={styles.copy}>
         <T variant="title" center>
-          Скільки ви платите за підписки?
+          Додайте підписки
         </T>
         <T variant="body" muted center style={styles.lead}>
-          Чесно? Мало хто знає. Додайте сервіси, і SubControl порахує все в гривнях та нагадає за день до списання.
+          Порахуємо в гривнях і нагадаємо до списання.
         </T>
       </FadeIn>
 
       <FadeIn delay={260} style={styles.quickBlock}>
         <T variant="label" muted center style={styles.quickTitle}>
-          Почніть з популярних
+          Популярні
         </T>
         <View style={styles.chips}>
           {quick.map((s) => (

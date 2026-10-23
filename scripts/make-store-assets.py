@@ -168,11 +168,11 @@ FONT_CSS = "".join(
 
 # (raw shot, headline, subline, background, notification or None)
 SLIDES = [
-    ("home-light", "Усі підписки<br>в гривнях", "Скільки на місяць і скільки на рік. Без калькулятора й сорому.", "#2F4BFF", None),
+    ("home-light", "Всі підписки<br>в гривнях", "Скільки на місяць і на рік.", "#2F4BFF", None),
     ("detail-light", "Нагадає за день<br>до списання", "«Продовжую» чи «Скасувати» просто зі сповіщення.", "#1B2140", "Завтра Netflix спише 449 ₴"),
-    ("import-light", "Знайде забуті<br>підписки", "У виписці monobank, ПриватБанку та інших банків. Файл не покидає телефон.", "#2F4BFF", None),
-    ("cancel-light", "Підкаже,<br>як скасувати", "Покроково і з прямим посиланням. Бо шукати кнопку «Скасувати» ніхто не любить.", "#1B2140", None),
-    ("home-dark", "Темна тема<br>теж є", "Для тих, хто рахує витрати вночі.", "#10132A", None),
+    ("import-light", "Знайде забуті<br>підписки", "У виписці monobank, ПриватБанку та інших.", "#2F4BFF", None),
+    ("cancel-light", "Підкаже,<br>як скасувати", "Покроково і з посиланням.", "#1B2140", None),
+    ("home-dark", "Темна тема<br>теж є", "", "#10132A", None),
 ]
 
 APP_ICON = ROOT / "assets/icon.png"
@@ -239,7 +239,7 @@ def feature_html():
     svg{{position:absolute;right:-120px;top:-60px;opacity:.16}}
     </style></head><body>
     <svg width="620" height="620" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#fff" stroke-width="7" stroke-dasharray="180 400" stroke-linecap="round" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="40" fill="none" stroke="#fff" stroke-width="2" opacity=".5"/></svg>
-    <div class="row"><img src="{data_uri(APP_ICON)}"><div><h1>SubControl</h1><p>Усі підписки в гривнях.<br>Нагадування за день до списання.</p></div></div>
+    <div class="row"><img src="{data_uri(APP_ICON)}"><div><h1>SubControl</h1><p>Всі підписки в гривнях.<br>Нагадування за день до списання.</p></div></div>
     </body></html>"""
 
 

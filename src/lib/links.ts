@@ -38,6 +38,3 @@ function previewStore(): StoreKind {
 export const STORE: StoreKind = Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : previewStore();
 
 export const STORE_NAME = STORE === 'android' ? 'Google Play' : STORE === 'ios' ? 'App Store' : 'App Store чи Google Play';
-
-/** "в App Store" / "у Google Play": the preposition follows the next sound. */
-export const IN_STORE = STORE === 'android' ? 'у Google Play' : STORE === 'ios' ? 'в App Store' : 'в App Store чи Google Play';

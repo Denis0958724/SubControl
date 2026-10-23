@@ -139,11 +139,11 @@ export function reminderText(sub: Subscription, daysBefore: number, rates: Rates
   return daysBefore === 0
     ? {
         title: `Сьогодні ${sub.name} спише ${amount}`,
-        body: 'Якщо підписка вже не потрібна, ще є шанс скасувати до списання.',
+        body: 'Ще можна скасувати до списання.',
       }
     : {
         title: `${dayWord(daysBefore)} ${sub.name} спише ${amount}`,
-        body: 'Ще користуєтесь? Якщо ні, скасуйте зараз, поки гроші на місці.',
+        body: 'Ще потрібна? Якщо ні, скасуйте зараз.',
       };
 }
 
